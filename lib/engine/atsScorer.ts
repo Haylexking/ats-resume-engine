@@ -133,8 +133,44 @@ const SYNONYM_MAP: Record<string, string[]> = {
   'vite': ['build tool'],
 
   // Data & Analytics
-  'data visualization': ['data viz', 'dashboards', 'reporting'],
-  'analytics': ['data analytics', 'business analytics', 'product analytics'],
+  'data visualization': ['data viz', 'dashboards', 'reporting', 'tableau', 'power bi'],
+  'analytics': ['data analytics', 'business analytics', 'product analytics', 'mixpanel', 'amplitude', 'google analytics', 'ga4'],
+  'google analytics': ['ga4', 'analytics', 'web analytics'],
+  'machine learning': ['ml', 'scikit-learn', 'deep learning', 'pytorch', 'tensorflow'],
+  'data science': ['pandas', 'numpy', 'scipy', 'jupyter', 'data analysis'],
+
+  // Product & Agile Management
+  'product management': ['product strategy', 'product roadmap', 'product lifecycle', 'roadmapping', 'feature prioritization'],
+  'product roadmap': ['product roadmapping', 'roadmap planning', 'product strategy'],
+  'user stories': ['user story writing', 'product backlog', 'backlog grooming', 'sprint planning'],
+  'stakeholder management': ['cross-functional leadership', 'executive stakeholder alignment', 'stakeholder collaboration'],
+  'go-to-market': ['gtm', 'gtm strategy', 'product launch'],
+
+  // Marketing, Sales & Growth
+  'seo': ['search engine optimization', 'organic search'],
+  'sem': ['search engine marketing', 'ppc', 'paid search', 'google ads'],
+  'conversion rate optimization': ['cro', 'conversion rate', 'funnel optimization', 'a/b testing'],
+  'crm': ['customer relationship management', 'salesforce', 'hubspot'],
+  'salesforce': ['sfdc', 'crm', 'salesforce crm'],
+  'hubspot': ['crm', 'marketing automation'],
+  'growth marketing': ['performance marketing', 'acquisition marketing', 'demand generation'],
+
+  // Healthcare & Clinical
+  'ehr': ['electronic health records', 'emr', 'electronic medical records', 'epic', 'cerner'],
+  'emr': ['electronic medical records', 'ehr', 'electronic health records'],
+  'patient care': ['clinical care', 'patient management', 'direct patient care'],
+
+  // Finance & Accounting
+  'financial modeling': ['dcf', 'discounted cash flow', 'financial analysis', 'financial projections'],
+  'gaap': ['generally accepted accounting principles', 'us gaap', 'accounting standards'],
+  'reconciliation': ['account reconciliation', 'bank reconciliation', 'financial reconciliation'],
+  'forecasting': ['financial forecasting', 'budgeting and forecasting', 'fp&a'],
+
+  // Mobile & Cross-Platform
+  'react native': ['mobile development', 'cross-platform mobile'],
+  'flutter': ['dart', 'mobile development', 'cross-platform mobile'],
+  'swift': ['ios development', 'swiftui', 'cocoapods'],
+  'kotlin': ['android development', 'jetpack compose', 'android sdk'],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
