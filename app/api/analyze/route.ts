@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMasterResume, saveJobApplication } from '@/lib/db';
-import { applyIndustryLens } from '@/lib/engine/industryLens';
+import { saveJobApplication } from '@/lib/db';
 import { parseJobDescription, parseResumeText } from '@/lib/engine/jdParser';
 import { scoreResumeAgainstJD } from '@/lib/engine/atsScorer';
 import { generateTieredRecommendations } from '@/lib/engine/recommendationEngine';
@@ -13,38 +12,38 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { jdText, industry, aiSettings, customResumeText } = body as {
+    const { jdText, resumeText, customResumeText, aiSettings } = body as {
       jdText: string;
-      industry?: string;
-      aiSettings: AISettingConfig;
+      resumeText?: string;
       customResumeText?: string;
+      aiSettings: AISettingConfig;
     };
+
+    const targetResumeText = resumeText || customResumeText;
 
     if (!jdText || !jdText.trim()) {
       return NextResponse.json({ error: 'Job description text is required' }, { status: 400 });
     }
 
-    let targetResume: MasterResume;
-
-    if (customResumeText && customResumeText.trim().length > 30) {
-      targetResume = await parseResumeText(customResumeText, aiSettings);
-    } else {
-      const masterResume = getMasterResume();
-      targetResume = applyIndustryLens(masterResume, industry);
+    if (!targetResumeText || !targetResumeText.trim()) {
+      return NextResponse.json({ error: 'Candidate resume text or document is required' }, { status: 400 });
     }
 
-    // Step 1: Parse JD into structured JSON (Role, Competencies, and Context)
+    // Step 1: Parse candidate resume into structured schema
+    const targetResume: MasterResume = await parseResumeText(targetResumeText, aiSettings);
+
+    // Step 2: Parse JD into structured JSON (Role, Competencies, and Sector Context)
     const t0 = Date.now();
     const parsedJD = await parseJobDescription(jdText, aiSettings, CURRENT_PROMPT_VERSIONS.parse);
     const t1 = Date.now();
 
-    const targetIndustry = (industry || parsedJD.company_context || 'General') as TargetIndustry;
+    const targetIndustry = (parsedJD.company_context || 'General') as TargetIndustry;
 
-    // Step 2: Run 3-Pass ATS Matching and Scoring
+    // Step 3: Run 3-Pass ATS Matching and Scoring
     const scores = await scoreResumeAgainstJD(targetResume, parsedJD, aiSettings, CURRENT_PROMPT_VERSIONS.score);
     const t2 = Date.now();
 
-    // Step 3: Generate Tiered Recommendations & Recruiter Insights
+    // Step 4: Generate Tiered Recommendations & Recruiter Insights
     const { suggestions, recruiter_insights, thinking, durationMs } = await generateTieredRecommendations(
       targetResume,
       parsedJD,
@@ -95,7 +94,7 @@ export async function POST(req: Request) {
       created_at: new Date().toISOString(),
       job_title: parsedJD.title,
       company: parsedJD.company,
-      industry: industry as TargetIndustry,
+      industry: targetIndustry,
       jd_text: jdText,
       parsed_jd: parsedJD,
       scores,

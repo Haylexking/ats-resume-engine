@@ -51,18 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Sparkles className="h-3.5 w-3.5 text-zinc-300" />
-            <span>Matcher Studio</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('master')}
-            className={`flex items-center space-x-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
-              activeTab === 'master'
-                ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-white/[0.08]'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
-            }`}
-          >
-            <FileText className="h-3.5 w-3.5 text-zinc-300" />
-            <span>Master Resume</span>
+            <span>ATS Matcher Studio</span>
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -73,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <History className="h-3.5 w-3.5 text-zinc-300" />
-            <span>Screening Logs</span>
+            <span>Applications &amp; Calibration</span>
           </button>
         </nav>
 

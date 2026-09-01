@@ -7,26 +7,20 @@ import {
   FileText,
   Upload,
   Clipboard,
-  Database,
-  CheckCircle2,
   FileUp,
-  X,
   AlertCircle,
   RotateCcw,
 } from 'lucide-react';
-import { MasterResume, AISettingConfig } from '@/lib/engine/types';
+import { AISettingConfig } from '@/lib/engine/types';
 
 export interface AnalyzePayload {
   jdText: string;
-  industry?: string;
-  resumeMode: 'master' | 'custom';
-  customResumeText?: string;
+  resumeText: string;
 }
 
 interface JDInputPanelProps {
   onAnalyze: (payload: AnalyzePayload) => void;
   isLoading: boolean;
-  masterResume: MasterResume;
   aiSettings?: AISettingConfig;
   onOpenSettings?: () => void;
 }
@@ -34,7 +28,6 @@ interface JDInputPanelProps {
 export const JDInputPanel: React.FC<JDInputPanelProps> = ({
   onAnalyze,
   isLoading,
-  masterResume,
   aiSettings,
   onOpenSettings,
 }) => {
@@ -42,9 +35,8 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
   const [jdText, setJdText] = useState('');
 
   // Universal Resume state
-  const [resumeMode, setResumeMode] = useState<'master' | 'custom'>('custom');
-  const [resumeSubMode, setResumeSubMode] = useState<'paste' | 'upload'>('upload');
-  const [customResumeText, setCustomResumeText] = useState('');
+  const [resumeMode, setResumeMode] = useState<'upload' | 'paste'>('upload');
+  const [resumeText, setResumeText] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -92,10 +84,9 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
         throw new Error(data.error || 'Failed to extract text from document');
       }
 
-      setCustomResumeText(data.extractedText);
+      setResumeText(data.extractedText);
       setUploadedFileName(file.name);
-      setResumeMode('custom');
-      setResumeSubMode('paste'); // Reveal the extracted text for transparency
+      setResumeMode('paste'); // Reveal extracted text for transparency and easy tweaking
     } catch (err: any) {
       setUploadError(err.message || 'Error parsing document');
     } finally {
@@ -114,12 +105,11 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!jdText.trim()) return;
+    if (!jdText.trim() || !resumeText.trim()) return;
 
     onAnalyze({
       jdText,
-      resumeMode,
-      customResumeText: resumeMode === 'custom' ? customResumeText : undefined,
+      resumeText,
     });
   };
 
@@ -165,13 +155,13 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
                 rows={16}
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
-                placeholder="Paste any Job Description here (Engineering, Design, Product, Healthcare, Marketing, Sales, Operations, Finance, Legal, etc.)..."
+                placeholder="Paste any Job Description here (Engineering, Product, Design, Healthcare, Marketing, Sales, Operations, Finance, Legal, etc.)..."
                 className="w-full h-full min-h-[380px] rounded-xl border border-white/[0.08] bg-[#09090b] p-4 font-mono text-xs leading-relaxed text-zinc-200 placeholder-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-all resize-none shadow-inner"
               />
             </div>
           </div>
 
-          {/* PANEL 2: CANDIDATE RESUME SOURCE */}
+          {/* PANEL 2: CANDIDATE RESUME */}
           <div className="space-y-3 flex flex-col">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -185,12 +175,9 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
               <div className="flex rounded-lg border border-white/[0.08] bg-[#09090b] p-0.5 text-[11px]">
                 <button
                   type="button"
-                  onClick={() => {
-                    setResumeMode('custom');
-                    setResumeSubMode('upload');
-                  }}
-                  className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 font-medium transition ${
-                    resumeMode === 'custom' && resumeSubMode === 'upload'
+                  onClick={() => setResumeMode('upload')}
+                  className={`flex items-center space-x-1.5 rounded-md px-3 py-1 font-medium transition ${
+                    resumeMode === 'upload'
                       ? 'bg-zinc-800 text-zinc-100 shadow-sm'
                       : 'text-zinc-400 hover:text-zinc-200'
                   }`}
@@ -200,12 +187,9 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setResumeMode('custom');
-                    setResumeSubMode('paste');
-                  }}
-                  className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 font-medium transition ${
-                    resumeMode === 'custom' && resumeSubMode === 'paste'
+                  onClick={() => setResumeMode('paste')}
+                  className={`flex items-center space-x-1.5 rounded-md px-3 py-1 font-medium transition ${
+                    resumeMode === 'paste'
                       ? 'bg-zinc-800 text-zinc-100 shadow-sm'
                       : 'text-zinc-400 hover:text-zinc-200'
                   }`}
@@ -213,23 +197,11 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
                   <Clipboard className="h-3 w-3" />
                   <span>Paste Text</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setResumeMode('master')}
-                  className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 font-medium transition ${
-                    resumeMode === 'master'
-                      ? 'bg-zinc-800 text-zinc-100 shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  <Database className="h-3 w-3" />
-                  <span>Master Profile</span>
-                </button>
               </div>
             </div>
 
             {/* Resume Mode View 1: Upload File */}
-            {resumeMode === 'custom' && resumeSubMode === 'upload' && (
+            {resumeMode === 'upload' && (
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
@@ -276,7 +248,7 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
             )}
 
             {/* Resume Mode View 2: Paste Raw Text */}
-            {resumeMode === 'custom' && resumeSubMode === 'paste' && (
+            {resumeMode === 'paste' && (
               <div className="relative flex-1 flex flex-col space-y-2">
                 {uploadedFileName && (
                   <div className="flex items-center justify-between rounded-lg bg-zinc-900 px-3 py-1.5 text-xs border border-white/[0.06]">
@@ -287,7 +259,7 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
                       type="button"
                       onClick={() => {
                         setUploadedFileName(null);
-                        setCustomResumeText('');
+                        setResumeText('');
                       }}
                       className="text-zinc-500 hover:text-zinc-300 text-[11px]"
                     >
@@ -297,51 +269,11 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
                 )}
                 <textarea
                   rows={16}
-                  value={customResumeText}
-                  onChange={(e) => setCustomResumeText(e.target.value)}
-                  placeholder="Paste candidate resume text directly here (or upload above)..."
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  placeholder="Paste candidate resume text directly here (or upload a PDF/Word file above)..."
                   className="w-full flex-1 min-h-[340px] rounded-xl border border-white/[0.08] bg-[#09090b] p-4 font-mono text-xs leading-relaxed text-zinc-200 placeholder-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-all resize-none shadow-inner"
                 />
-              </div>
-            )}
-
-            {/* Resume Mode View 3: Master Profile */}
-            {resumeMode === 'master' && (
-              <div className="flex-1 min-h-[380px] flex flex-col justify-between rounded-xl border border-white/[0.08] bg-[#09090b] p-5 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                    <span className="text-xs font-semibold text-zinc-200">
-                      {masterResume.contact_block.name}
-                    </span>
-                    <span className="text-[11px] text-zinc-400">
-                      {masterResume.experience.length} roles • {masterResume.education.length} degrees
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                    {masterResume.summary}
-                  </p>
-                  <div className="space-y-1.5 pt-2">
-                    <span className="text-[11px] uppercase tracking-wider font-semibold text-zinc-500">
-                      Saved Experience Roles:
-                    </span>
-                    <div className="space-y-1">
-                      {masterResume.experience.map((exp) => (
-                        <div
-                          key={exp.id}
-                          className="flex items-center justify-between text-xs text-zinc-300 bg-zinc-900/60 px-2.5 py-1 rounded border border-white/[0.04]"
-                        >
-                          <span className="font-medium truncate">{exp.title} — {exp.company}</span>
-                          <span className="text-[11px] text-zinc-500 ml-2 whitespace-nowrap">{exp.dates}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-emerald-400/90 flex items-center space-x-1.5 bg-emerald-950/20 border border-emerald-500/20 p-2.5 rounded-lg">
-                  <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>Your Master Profile will be evaluated and tailored directly against the target JD.</span>
-                </div>
               </div>
             )}
           </div>
@@ -415,16 +347,18 @@ export const JDInputPanel: React.FC<JDInputPanelProps> = ({
         {/* Universal Action Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-white/[0.06] gap-4">
           <div className="text-xs text-zinc-400">
-            {resumeMode === 'master' ? (
-              <span>Matching against your saved <strong>Master Profile</strong></span>
-            ) : (
-              <span>Matching against your {uploadedFileName ? `uploaded file (${uploadedFileName})` : 'custom resume'}</span>
-            )}
+            <span>
+              {uploadedFileName
+                ? `Ready to evaluate uploaded resume (${uploadedFileName})`
+                : resumeText.trim()
+                ? 'Ready to evaluate pasted candidate resume'
+                : 'Upload or paste candidate resume above to start'}
+            </span>
           </div>
 
           <button
             type="submit"
-            disabled={isLoading || !jdText.trim() || (resumeMode === 'custom' && !customResumeText.trim())}
+            disabled={isLoading || !jdText.trim() || !resumeText.trim()}
             className="flex items-center space-x-2 rounded-xl bg-zinc-100 px-7 py-3 text-xs font-semibold text-zinc-900 shadow-md transition-all hover:bg-white hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoading ? (

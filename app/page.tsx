@@ -9,21 +9,18 @@ import { TieredSuggestionsDiff } from '@/components/TieredSuggestionsDiff';
 import { RecruiterInsightsCard } from '@/components/RecruiterInsightsCard';
 import { ModelReasoningTrace } from '@/components/ModelReasoningTrace';
 import { ParseabilityHarnessModal } from '@/components/ParseabilityHarnessModal';
-import { MasterResumeEditor } from '@/components/MasterResumeEditor';
 import { HistoryTrackerView } from '@/components/HistoryTrackerView';
 import {
   AISettingConfig,
   MasterResume,
   JobApplicationRecord,
-  TargetIndustry,
   TieredSuggestion,
   ParseabilityResult,
 } from '@/lib/engine/types';
-import { INITIAL_MASTER_RESUME } from '@/lib/seed/masterData';
 import { Download, FileCheck, Sparkles, RefreshCw, Cpu, Key, ArrowRight } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'master' | 'history' | 'settings'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'history' | 'settings'>('studio');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isParseabilityOpen, setIsParseabilityOpen] = useState(false);
 
@@ -35,18 +32,18 @@ export default function Home() {
     modelReason: 'groq/compound-mini',
     apiKeys: { groq: '', nvidia: '', gemini: '', openai: '', anthropic: '' },
   });
-  const [masterResume, setMasterResume] = useState<MasterResume>(INITIAL_MASTER_RESUME);
   const [applications, setApplications] = useState<JobApplicationRecord[]>([]);
 
   // Current Active Run State
   const [currentApp, setCurrentApp] = useState<JobApplicationRecord | null>(null);
+  const [activeResume, setActiveResume] = useState<MasterResume | null>(null);
   const [suggestions, setSuggestions] = useState<TieredSuggestion[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [parseabilityResult, setParseabilityResult] = useState<ParseabilityResult | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  // Load initial data on mount
+  // Load initial settings and history on mount
   useEffect(() => {
     fetch('/api/settings')
       .then((res) => res.json())
@@ -54,13 +51,6 @@ export default function Home() {
         if (data && data.provider) setAiSettings(data);
       })
       .catch((err) => console.error('Failed to load settings:', err));
-
-    fetch('/api/master-resume')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.contact_block) setMasterResume(data);
-      })
-      .catch((err) => console.error('Failed to load master resume:', err));
 
     fetch('/api/applications')
       .then((res) => res.json())
@@ -93,7 +83,10 @@ export default function Home() {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          aiSettings,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -101,8 +94,8 @@ export default function Home() {
       }
       if (data.success && data.appRecord) {
         setCurrentApp(data.appRecord);
+        setActiveResume(data.lensedResume);
         setSuggestions(data.appRecord.suggestions || []);
-        // Refresh past applications
         setApplications((prev) => [data.appRecord, ...prev]);
       }
     } catch (err: any) {
@@ -113,7 +106,7 @@ export default function Home() {
     }
   };
 
-  // Handle suggestion status toggle (accept, reject, confirm unverified)
+  // Handle suggestion status toggle
   const handleToggleSuggestionStatus = (
     id: string,
     newStatus: 'accepted' | 'rejected' | 'confirmed' | 'pending'
@@ -125,7 +118,7 @@ export default function Home() {
 
   // Run Parseability Harness and open inspection modal
   const handleInspectParseability = async () => {
-    if (!currentApp) return;
+    if (!currentApp || !activeResume) return;
     setIsExporting(true);
     try {
       const res = await fetch('/api/export', {
@@ -135,7 +128,7 @@ export default function Home() {
           appId: currentApp.id,
           industry: currentApp.industry,
           acceptedSuggestions: suggestions,
-          resume: lensedResume || masterResume,
+          resume: activeResume,
           format: 'docx',
         }),
       });
@@ -143,17 +136,20 @@ export default function Home() {
       if (data.success && data.parseability) {
         setParseabilityResult(data.parseability);
         setIsParseabilityOpen(true);
+      } else {
+        alert(data.error || 'Failed to extract parseability text');
       }
-    } catch (err) {
-      console.error('Error running parseability harness:', err);
+    } catch (err: any) {
+      console.error('Error inspecting parseability:', err);
+      alert('Error running parseability harness: ' + err.message);
     } finally {
       setIsExporting(false);
     }
   };
 
-  // Trigger DOCX File Download
+  // Download Tailored ATS-Compliant DOCX
   const handleDownloadDocx = async () => {
-    if (!currentApp) return;
+    if (!currentApp || !activeResume) return;
     try {
       const res = await fetch('/api/export', {
         method: 'POST',
@@ -162,13 +158,13 @@ export default function Home() {
           appId: currentApp.id,
           industry: currentApp.industry,
           acceptedSuggestions: suggestions,
-          resume: lensedResume || masterResume,
+          resume: activeResume,
           format: 'docx',
         }),
       });
       const data = await res.json();
-      if (data.success && data.base64) {
-        const byteCharacters = atob(data.base64);
+      if (data.success && data.docxBase64) {
+        const byteCharacters = atob(data.docxBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -180,20 +176,23 @@ export default function Home() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const candidateName = (lensedResume || masterResume).contact_block?.name?.replace(/\s+/g, '_') || 'Resume';
-        a.download = data.filename || `${candidateName}_${currentApp.industry}.docx`;
+        const candidateName = activeResume.contact_block.name.replace(/\s+/g, '_') || 'Resume';
+        const roleName = currentApp.job_title.replace(/[^a-zA-Z0-9]/g, '_') || 'Tailored';
+        a.download = `${candidateName}_${roleName}_ATS.docx`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-    } catch (err) {
-      console.error('Error downloading DOCX:', err);
+    } catch (err: any) {
+      console.error('Download error:', err);
+      alert('Error generating DOCX: ' + err.message);
     }
   };
 
-  // Trigger Plain Text Download
+  // Download Plain Text (.txt)
   const handleDownloadTxt = async () => {
-    if (!currentApp) return;
+    if (!currentApp || !activeResume) return;
     try {
       const res = await fetch('/api/export', {
         method: 'POST',
@@ -202,109 +201,108 @@ export default function Home() {
           appId: currentApp.id,
           industry: currentApp.industry,
           acceptedSuggestions: suggestions,
-          resume: lensedResume || masterResume,
+          resume: activeResume,
           format: 'txt',
         }),
       });
       const data = await res.json();
-      if (data.success && data.text) {
-        const blob = new Blob([data.text], { type: 'text/plain;charset=utf-8' });
+      if (data.success && data.txt) {
+        const blob = new Blob([data.txt], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const candidateName = (lensedResume || masterResume).contact_block?.name?.replace(/\s+/g, '_') || 'Resume';
-        a.download = `${candidateName}_${currentApp.industry}.txt`;
+        const candidateName = activeResume.contact_block.name.replace(/\s+/g, '_') || 'Resume';
+        const roleName = currentApp.job_title.replace(/[^a-zA-Z0-9]/g, '_') || 'Tailored';
+        a.download = `${candidateName}_${roleName}_ATS.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-    } catch (err) {
-      console.error('Error downloading TXT:', err);
+    } catch (err: any) {
+      console.error('Download error:', err);
+      alert('Error generating TXT: ' + err.message);
     }
   };
 
-  // Update Master Resume
-  const handleSaveMasterResume = async (updated: MasterResume) => {
-    setMasterResume(updated);
-    await fetch('/api/master-resume', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated),
-    });
-  };
-
-  // Reset Master Resume
-  const handleResetMasterResume = async () => {
-    setMasterResume(INITIAL_MASTER_RESUME);
-    await fetch('/api/master-resume', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reset: true }),
-    });
-  };
-
-  // Update Screening Outcome
-  const handleUpdateOutcome = async (
-    id: string,
-    outcome: 'passed_ats' | 'rejected_ats' | 'interview_scheduled' | 'no_response' | 'pending'
+  // Handle Application Outcome Update
+  const handleOutcomeChange = async (
+    appId: string,
+    outcome: 'pending' | 'callback' | 'interview' | 'rejection' | 'offer'
   ) => {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, screening_outcome: outcome } : app))
-    );
-    await fetch('/api/applications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, screening_outcome: outcome }),
-    });
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId, outcome }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApplications((prev) =>
+          prev.map((a) => (a.id === appId ? { ...a, screening_outcome: outcome } : a))
+        );
+        if (currentApp?.id === appId) {
+          setCurrentApp((prev) => (prev ? { ...prev, screening_outcome: outcome } : null));
+        }
+      }
+    } catch (err) {
+      console.error('Error updating outcome:', err);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#09090b] text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white">
-      {/* Header Bar */}
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-zinc-800 selection:text-zinc-100">
+      {/* Top Header */}
       <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        activeTab={activeTab as any}
+        setActiveTab={(tab: any) => setActiveTab(tab)}
         aiSettings={aiSettings}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 space-y-8">
+      {/* Main Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {activeTab === 'studio' && (
-          <div className="space-y-8">
-            {/* Error Notification Alert & 1-Click Fallback Switches */}
+          <div className="space-y-6">
+            {/* Error Notification Banner with Instant 1-Click Model Switch */}
             {analysisError && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-4 text-rose-200 text-xs shadow-lg animate-fade-in space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2.5">
-                    <span className="h-2 w-2 rounded-full bg-rose-400 animate-pulse" />
-                    <span className="font-medium">{analysisError}</span>
+              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-4 text-xs text-rose-300 animate-fade-in shadow-xl space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-2.5">
+                    <div className="h-2 w-2 rounded-full bg-rose-400 mt-1 flex-shrink-0 animate-ping" />
+                    <div>
+                      <span className="font-semibold text-rose-200">Analysis Halted:</span>
+                      <p className="mt-0.5 text-rose-300 font-mono text-[11px] leading-relaxed">
+                        {analysisError}
+                      </p>
+                    </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsSettingsOpen(true)}
-                    className="rounded-lg bg-rose-900/80 hover:bg-rose-850 px-3 py-1.5 font-medium text-rose-100 border border-rose-400/20 transition text-xs whitespace-nowrap"
+                    onClick={() => setAnalysisError(null)}
+                    className="text-rose-400 hover:text-rose-200 text-xs ml-4"
                   >
-                    All Models...
+                    Dismiss
                   </button>
                 </div>
 
+                {/* 1-Click Switch Bar */}
                 <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-rose-500/20 text-[11px]">
-                  <span className="text-zinc-400">1-Click Quick Retry:</span>
+                  <span className="text-zinc-400 font-medium">Switch to another model:</span>
                   <button
                     type="button"
                     onClick={() => {
                       handleSaveSettings({
                         ...aiSettings,
                         provider: 'groq',
-                        model: 'qwen/qwen3.8-27b',
+                        model: 'groq/compound-mini',
                         modelParse: 'qwen/qwen3.8-27b',
                         modelReason: 'groq/compound-mini',
                       });
                     }}
-                    className="rounded-md bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 text-orange-300 border border-orange-500/30 transition active:scale-95 font-medium"
+                    className="rounded-md bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 text-emerald-300 border border-emerald-500/30 transition active:scale-95 font-medium"
                   >
-                    ⚡ Groq Qwen 3.8 (Ultra-Fast)
+                    ⚡ Groq Compound Mini
                   </button>
                   <button
                     type="button"
@@ -319,7 +317,7 @@ export default function Home() {
                     }}
                     className="rounded-md bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 text-emerald-300 border border-emerald-500/30 transition active:scale-95 font-medium"
                   >
-                    🟢 NVIDIA Llama 3.2 90B
+                    🟢 NVIDIA Llama 90B
                   </button>
                   <button
                     type="button"
@@ -336,30 +334,14 @@ export default function Home() {
                   >
                     🔵 MiniMax M3
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleSaveSettings({
-                        ...aiSettings,
-                        provider: 'nvidia',
-                        model: 'google/gemma-4-31b-it',
-                        modelParse: 'google/gemma-4-31b-it',
-                        modelReason: 'google/gemma-4-31b-it',
-                      });
-                    }}
-                    className="rounded-md bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 text-purple-300 border border-purple-500/30 transition active:scale-95 font-medium"
-                  >
-                    🟣 Google Gemma 4 31B
-                  </button>
                 </div>
               </div>
             )}
 
-            {/* Top Dual Input Studio (JD + Candidate Resume Source) */}
+            {/* Top Universal Dual Input Studio (JD + Candidate Resume) */}
             <JDInputPanel
               onAnalyze={handleAnalyze}
               isLoading={isAnalyzing}
-              masterResume={masterResume}
               aiSettings={aiSettings}
               onOpenSettings={() => setIsSettingsOpen(true)}
             />
@@ -410,6 +392,14 @@ export default function Home() {
                         <Download className="h-3.5 w-3.5 text-zinc-900" />
                         <span>Export Word (.docx)</span>
                       </button>
+
+                      <button
+                        onClick={handleDownloadTxt}
+                        className="flex items-center space-x-1.5 rounded-xl border border-white/[0.08] bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white active:scale-[0.98]"
+                      >
+                        <Download className="h-3.5 w-3.5 text-zinc-400" />
+                        <span>Plain Text (.txt)</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -424,25 +414,17 @@ export default function Home() {
                 </div>
                 <h3 className="text-sm font-semibold text-zinc-200">Ready for ATS Matching</h3>
                 <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                  Provide a Job Description and choose a resume source above, then click &quot;Run ATS Match &amp; Gap Engine&quot; to inspect 3-pass scoring and recruiter rewrites.
+                  Paste any target Job Description and upload or paste candidate resume text above, then click &quot;Run ATS Match &amp; Gap Engine&quot; to inspect 3-pass scoring and recruiter rewrites.
                 </p>
               </div>
             )}
           </div>
         )}
 
-        {activeTab === 'master' && (
-          <MasterResumeEditor
-            masterResume={masterResume}
-            onSave={handleSaveMasterResume}
-            onReset={handleResetMasterResume}
-          />
-        )}
-
         {activeTab === 'history' && (
           <HistoryTrackerView
             applications={applications}
-            onUpdateOutcome={handleUpdateOutcome}
+            onUpdateOutcome={handleOutcomeChange}
           />
         )}
       </main>
@@ -455,15 +437,16 @@ export default function Home() {
         onSave={handleSaveSettings}
       />
 
-      {/* Parseability Harness Inspector Modal */}
-      <ParseabilityHarnessModal
-        isOpen={isParseabilityOpen}
-        onClose={() => setIsParseabilityOpen(false)}
-        result={parseabilityResult}
-        industry={currentApp?.industry || 'AI Platforms'}
-        onDownloadDocx={handleDownloadDocx}
-        onDownloadTxt={handleDownloadTxt}
-      />
+      {/* Parseability Harness Modal */}
+      {parseabilityResult && (
+        <ParseabilityHarnessModal
+          isOpen={isParseabilityOpen}
+          onClose={() => setIsParseabilityOpen(false)}
+          result={parseabilityResult}
+          onDownloadDocx={handleDownloadDocx}
+          onDownloadTxt={handleDownloadTxt}
+        />
+      )}
     </div>
   );
 }
