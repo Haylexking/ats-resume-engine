@@ -29,11 +29,11 @@ export default function Home() {
 
   // Core Data States
   const [aiSettings, setAiSettings] = useState<AISettingConfig>({
-    provider: 'gemini',
-    model: 'gemini-3.7-flash',
-    modelParse: 'gemini-3.6-flash',
-    modelReason: 'gemini-3.7-flash',
-    apiKeys: { gemini: '', openai: '', anthropic: '' },
+    provider: 'groq',
+    model: 'groq/compound-mini',
+    modelParse: 'qwen/qwen3.8-27b',
+    modelReason: 'groq/compound-mini',
+    apiKeys: { groq: '', nvidia: '', gemini: '', openai: '', anthropic: '' },
   });
   const [masterResume, setMasterResume] = useState<MasterResume>(INITIAL_MASTER_RESUME);
   const [applications, setApplications] = useState<JobApplicationRecord[]>([]);

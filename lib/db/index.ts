@@ -148,10 +148,10 @@ export function getAISettings(): AISettingConfig {
   const defaultAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
 
   const defaults: AISettingConfig = {
-    provider: (process.env.DEFAULT_AI_PROVIDER as any) || 'nvidia',
-    model: process.env.MODEL_PRIMARY || process.env.DEFAULT_AI_MODEL || 'meta/llama-3.2-90b-vision-instruct',
-    modelParse: process.env.MODEL_PARSE || 'meta/llama-3.2-11b-vision-instruct',
-    modelReason: process.env.MODEL_REASON || 'meta/llama-3.2-90b-vision-instruct',
+    provider: (process.env.DEFAULT_AI_PROVIDER as any) || 'groq',
+    model: process.env.MODEL_PRIMARY || process.env.DEFAULT_AI_MODEL || 'groq/compound-mini',
+    modelParse: process.env.MODEL_PARSE || 'qwen/qwen3.8-27b',
+    modelReason: process.env.MODEL_REASON || 'groq/compound-mini',
     apiKeys: {
       nvidia: defaultNvidiaKey,
       groq: defaultGroqKey,

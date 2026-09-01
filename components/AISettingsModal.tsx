@@ -172,16 +172,20 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
     setProvider(newProvider);
     const availableModels = MODEL_OPTIONS[newProvider];
     if (availableModels && availableModels.length > 0) {
-      setModel(availableModels[0].id);
-      if (newProvider === 'nvidia') {
-        setModelParse('meta/llama-3.2-11b-vision-instruct');
-        setModelReason('meta/llama-3.2-11b-vision-instruct');
-      } else if (newProvider === 'groq') {
+      if (newProvider === 'groq') {
+        setModel('groq/compound-mini');
         setModelParse('qwen/qwen3.8-27b');
         setModelReason('groq/compound-mini');
+      } else if (newProvider === 'nvidia') {
+        setModel('meta/llama-3.2-90b-vision-instruct');
+        setModelParse('meta/llama-3.2-11b-vision-instruct');
+        setModelReason('meta/llama-3.2-90b-vision-instruct');
       } else if (newProvider === 'gemini') {
+        setModel('gemini-3.7-flash');
         setModelParse('gemini-3.6-flash');
         setModelReason('gemini-3.7-flash');
+      } else {
+        setModel(availableModels[0].id);
       }
     }
   };

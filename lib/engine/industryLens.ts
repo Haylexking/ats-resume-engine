@@ -96,8 +96,11 @@ export const INDUSTRY_LENSES: Record<TargetIndustry, IndustryLens> = {
  * Selects and reweights bullets from the master data layer through the chosen industry lens.
  * Adjusts vocabulary register to target industry without fabricating unevidenced experience.
  */
-export function applyIndustryLens(master: MasterResume, industry: TargetIndustry): MasterResume {
-  const lens = INDUSTRY_LENSES[industry] || INDUSTRY_LENSES['AI Platforms'];
+export function applyIndustryLens(master: MasterResume, industry?: string): MasterResume {
+  if (!industry || industry === 'General' || !INDUSTRY_LENSES[industry as TargetIndustry]) {
+    return master;
+  }
+  const lens = INDUSTRY_LENSES[industry as TargetIndustry];
 
   const lensedExperience: MasterExperience[] = master.experience.map((exp) => {
     // Sort and re-weight bullets based on industry relevance

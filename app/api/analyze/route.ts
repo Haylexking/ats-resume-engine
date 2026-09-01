@@ -13,9 +13,9 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { jdText, industry = 'AI Platforms', aiSettings, customResumeText } = body as {
+    const { jdText, industry, aiSettings, customResumeText } = body as {
       jdText: string;
-      industry: string;
+      industry?: string;
       aiSettings: AISettingConfig;
       customResumeText?: string;
     };
@@ -30,13 +30,15 @@ export async function POST(req: Request) {
       targetResume = await parseResumeText(customResumeText, aiSettings);
     } else {
       const masterResume = getMasterResume();
-      targetResume = applyIndustryLens(masterResume, industry as TargetIndustry);
+      targetResume = applyIndustryLens(masterResume, industry);
     }
 
-    // Step 1: Parse JD into structured JSON
+    // Step 1: Parse JD into structured JSON (Role, Competencies, and Context)
     const t0 = Date.now();
     const parsedJD = await parseJobDescription(jdText, aiSettings, CURRENT_PROMPT_VERSIONS.parse);
     const t1 = Date.now();
+
+    const targetIndustry = (industry || parsedJD.company_context || 'General') as TargetIndustry;
 
     // Step 2: Run 3-Pass ATS Matching and Scoring
     const scores = await scoreResumeAgainstJD(targetResume, parsedJD, aiSettings, CURRENT_PROMPT_VERSIONS.score);
