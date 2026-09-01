@@ -1,0 +1,114 @@
+[
+  {
+    "id": "jd-1-fintech",
+    "title": "Senior Backend Engineer (Fintech & Payments)",
+    "company": "Stripe",
+    "text": "Stripe is looking for a Senior Backend Engineer to build high-throughput payment settlement infrastructure. You will architect PCI-DSS compliant distributed microservices using Go and PostgreSQL, with Kafka for event streaming. Requirements: 5+ years backend engineering experience, strong knowledge of Go or Java, experience with distributed databases and high-concurrency transaction processing. Preferred: AWS infrastructure and Redis caching experience.",
+    "ground_truth": {
+      "hard_skills": ["Go", "PostgreSQL", "Kafka", "PCI-DSS", "Java", "AWS", "Redis"],
+      "qualifications_required": [
+        "5+ years backend engineering experience",
+        "strong knowledge of Go or Java",
+        "experience with distributed databases and high-concurrency transaction processing"
+      ]
+    }
+  },
+  {
+    "id": "jd-2-ai-platform",
+    "title": "Staff AI Platform Engineer",
+    "company": "Anthropic",
+    "text": "Join our AI Platform team to build scalable RAG pipelines and model evaluation harnesses. We use Python, FastAPI, TypeScript, PyTorch, Pinecone, and Docker on GCP. Responsibilities include building streaming LLM orchestration services, optimizing token latency, and deploying vector indexing systems. Must have: 6+ years software engineering experience, deep experience with LLM orchestration (RAG, prompt engineering, vector databases), proficiency in Python and TypeScript. Nice to have: Experience with Kubernetes and Redis.",
+    "ground_truth": {
+      "hard_skills": ["Python", "FastAPI", "TypeScript", "PyTorch", "Pinecone", "Docker", "GCP", "LLMs", "RAG", "Vector Search"],
+      "qualifications_required": [
+        "6+ years software engineering experience",
+        "deep experience with LLM orchestration (RAG, prompt engineering, vector databases)",
+        "proficiency in Python and TypeScript"
+      ]
+    }
+  },
+  {
+    "id": "jd-3-fullstack-edtech",
+    "title": "Lead Full-Stack Engineer",
+    "company": "Duolingo",
+    "text": "Duolingo is seeking a Lead Full-Stack Engineer to build interactive learning interfaces. Tech stack: React, Next.js, TypeScript, Node.js, GraphQL, and PostgreSQL. Requirements: 7+ years building production web applications, mastery of React, TypeScript, and modern CSS/Tailwind, experience designing GraphQL APIs. Bonus: Experience with A/B testing and accessibility (WCAG).",
+    "ground_truth": {
+      "hard_skills": ["React", "Next.js", "TypeScript", "Node.js", "GraphQL", "PostgreSQL", "Tailwind CSS", "A/B Testing"],
+      "qualifications_required": [
+        "7+ years building production web applications",
+        "mastery of React, TypeScript, and modern CSS/Tailwind",
+        "experience designing GraphQL APIs"
+      ]
+    }
+  },
+  {
+    "id": "jd-4-healthtech-data",
+    "title": "Senior Health Data Engineer",
+    "company": "Epic Systems",
+    "text": "We need a Senior Data Engineer to architect HIPAA-compliant health data ingestion pipelines. Core technologies: Python, SQL, PostgreSQL, Spark, Airflow, and Docker on AWS. You will build ETL pipelines processing HL7/FHIR records. Requirements: 4+ years of data engineering experience, strong SQL and Python skills, experience with HIPAA compliance and clinical data standards. Preferred: Snowflake and Terraform experience.",
+    "ground_truth": {
+      "hard_skills": ["Python", "SQL", "PostgreSQL", "Spark", "Airflow", "Docker", "AWS", "HIPAA", "HL7/FHIR", "ETL", "Snowflake", "Terraform"],
+      "qualifications_required": [
+        "4+ years of data engineering experience",
+        "strong SQL and Python skills",
+        "experience with HIPAA compliance and clinical data standards"
+      ]
+    }
+  },
+  {
+    "id": "jd-5-devops-govtech",
+    "title": "Lead Cloud & DevOps Engineer",
+    "company": "Palantir",
+    "text": "Seeking a Lead DevOps Engineer for our GovTech cloud platform. Tech stack: Kubernetes, Terraform, Docker, AWS, CI/CD with GitHub Actions, and Prometheus. Responsibilities include maintaining FedRAMP-compliant infrastructure, zero-trust security controls, and automated deployment pipelines. Requirements: 6+ years DevOps/SRE experience, strong Terraform and Kubernetes expertise, knowledge of FedRAMP/SOC2 compliance. Preferred: Go programming experience and Helm chart management.",
+    "ground_truth": {
+      "hard_skills": ["Kubernetes", "Terraform", "Docker", "AWS", "CI/CD", "GitHub Actions", "Prometheus", "FedRAMP", "SOC2", "Go", "Helm"],
+      "qualifications_required": [
+        "6+ years DevOps/SRE experience",
+        "strong Terraform and Kubernetes expertise",
+        "knowledge of FedRAMP/SOC2 compliance"
+      ]
+    }
+  },
+  {
+    "id": "jd-6-ecommerce-platform",
+    "title": "Principal Architect (E-Commerce Platform)",
+    "company": "Shopify",
+    "text": "Shopify is looking for a Principal Architect to scale checkout and inventory reservation engines. Tech stack: Ruby, Go, React, TypeScript, Kafka, MySQL, Redis, and Google Cloud Platform (GCP). You will lead architecture for high-concurrency Black Friday peak traffic. Requirements: 8+ years experience architecting distributed e-commerce or checkout engines, deep expertise with high-throughput event streaming (Kafka) and caching (Redis), mastery of Go or Ruby. Preferred: GraphQL and Kubernetes experience.",
+    "ground_truth": {
+      "hard_skills": ["Go", "Ruby", "React", "TypeScript", "Kafka", "MySQL", "Redis", "GCP", "GraphQL", "Kubernetes"],
+      "qualifications_required": [
+        "8+ years experience architecting distributed e-commerce or checkout engines",
+        "deep expertise with high-throughput event streaming (Kafka) and caching (Redis)",
+        "mastery of Go or Ruby"
+      ]
+    }
+  },
+  {
+    "id": "jd-7-web3-defi",
+    "title": "Senior Smart Contract & Protocol Engineer",
+    "company": "Uniswap Labs",
+    "text": "Join Uniswap Labs to build decentralized liquidity protocols. We use Solidity, Rust, TypeScript, Hardhat, Ethers.js, and EVM architecture on Ethereum and Layer-2 rollups. Requirements: 4+ years software engineering experience with at least 2 years writing production Solidity smart contracts, deep understanding of EVM gas optimization, and protocol security auditing experience. Preferred: Experience with Rust, Foundry, and zero-knowledge rollups.",
+    "ground_truth": {
+      "hard_skills": ["Solidity", "Rust", "TypeScript", "Ethers.js", "Hardhat", "EVM", "Ethereum", "Smart Contracts", "Foundry"],
+      "qualifications_required": [
+        "4+ years software engineering experience with at least 2 years writing production Solidity smart contracts",
+        "deep understanding of EVM gas optimization",
+        "protocol security auditing experience"
+      ]
+    }
+  },
+  {
+    "id": "jd-8-traveltech-realtime",
+    "title": "Senior Real-Time Systems Engineer",
+    "company": "Airbnb",
+    "text": "Airbnb is looking for a Senior Engineer to scale our real-time search and booking availability platform. Our stack: Java, Kotlin, Python, gRPC, DynamoDB, Redis, AWS, and Terraform. Responsibilities: architect low-latency multi-region inventory caches and booking synchronization services. Requirements: 5+ years backend systems experience, strong proficiency in Java or Kotlin, experience with distributed NoSQL databases (DynamoDB or Cassandra) and gRPC services. Preferred: Experience with Terraform and AWS multi-region deployments.",
+    "ground_truth": {
+      "hard_skills": ["Java", "Kotlin", "Python", "gRPC", "DynamoDB", "Redis", "AWS", "Terraform", "NoSQL"],
+      "qualifications_required": [
+        "5+ years backend systems experience",
+        "strong proficiency in Java or Kotlin",
+        "experience with distributed NoSQL databases (DynamoDB or Cassandra) and gRPC services"
+      ]
+    }
+  }
+]
