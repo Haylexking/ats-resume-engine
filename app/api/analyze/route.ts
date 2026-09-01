@@ -7,6 +7,9 @@ import { generateTieredRecommendations } from '@/lib/engine/recommendationEngine
 import { TargetIndustry, JobApplicationRecord, AISettingConfig, MasterResume, ReasoningStep } from '@/lib/engine/types';
 import { CURRENT_PROMPT_VERSIONS } from '@/lib/engine/prompts';
 
+// Allow Vercel serverless execution up to 60s for deep reasoning models
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();

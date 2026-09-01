@@ -2,15 +2,21 @@ import fs from 'fs';
 import path from 'path';
 import { MasterResume, JobApplicationRecord, AISettingConfig, OutcomeRecord } from '../engine/types';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+// Use /tmp for writable storage in serverless environments (e.g. Vercel)
+const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
+const DATA_DIR = isServerless ? path.join('/tmp', 'ats_data') : path.join(process.cwd(), 'data');
 const MASTER_RESUME_FILE = path.join(DATA_DIR, 'master_resume.json');
 const APPLICATIONS_FILE = path.join(DATA_DIR, 'applications.json');
 const OUTCOMES_FILE = path.join(DATA_DIR, 'outcomes.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
 function ensureDirExists() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (err) {
+    // Ignore directory creation errors on read-only environments
   }
 }
 
@@ -24,14 +30,17 @@ export function getMasterResume(): MasterResume {
     const raw = fs.readFileSync(MASTER_RESUME_FILE, 'utf-8');
     return JSON.parse(raw);
   } catch (err) {
-    console.error('Error reading master resume:', err);
     return getDefaultMasterResume();
   }
 }
 
 export function saveMasterResume(resume: MasterResume): void {
-  ensureDirExists();
-  fs.writeFileSync(MASTER_RESUME_FILE, JSON.stringify(resume, null, 2), 'utf-8');
+  try {
+    ensureDirExists();
+    fs.writeFileSync(MASTER_RESUME_FILE, JSON.stringify(resume, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Could not persist master resume to disk (ephemeral serverless environment):', err);
+  }
 }
 
 // 2. JOB APPLICATIONS & SCREENING OUTCOMES
@@ -49,18 +58,20 @@ export function getJobApplications(): JobApplicationRecord[] {
 }
 
 export function saveJobApplication(app: JobApplicationRecord): void {
-  ensureDirExists();
-  const existing = getJobApplications();
-  const index = existing.findIndex((a) => a.id === app.id);
-  if (index >= 0) {
-    existing[index] = app;
-  } else {
-    existing.unshift(app);
+  try {
+    ensureDirExists();
+    const existing = getJobApplications();
+    const index = existing.findIndex((a) => a.id === app.id);
+    if (index >= 0) {
+      existing[index] = app;
+    } else {
+      existing.unshift(app);
+    }
+    fs.writeFileSync(APPLICATIONS_FILE, JSON.stringify(existing, null, 2), 'utf-8');
+    syncOutcomeRecord(app);
+  } catch (err) {
+    console.warn('Could not persist application to disk (ephemeral serverless environment):', err);
   }
-  fs.writeFileSync(APPLICATIONS_FILE, JSON.stringify(existing, null, 2), 'utf-8');
-
-  // Also maintain outcomes record table for analytical calibration
-  syncOutcomeRecord(app);
 }
 
 export function updateScreeningOutcome(

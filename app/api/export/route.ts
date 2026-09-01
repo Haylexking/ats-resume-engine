@@ -5,6 +5,8 @@ import { generateATSCompliantDocx } from '@/lib/engine/docxExporter';
 import { runParseabilityHarness } from '@/lib/engine/parseabilityHarness';
 import { TargetIndustry, TieredSuggestion, MasterResume } from '@/lib/engine/types';
 
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
