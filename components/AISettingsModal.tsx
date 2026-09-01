@@ -346,16 +346,7 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
             </select>
           </div>
 
-          {/* Server-Side Security & Inference Indicator */}
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-4 space-y-2">
-            <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-300">
-              <Key className="h-4 w-4 text-emerald-400" />
-              <span>Server-Side Security &amp; Inference</span>
-            </div>
-            <p className="text-[11px] text-zinc-400 leading-relaxed">
-              API credentials are secure and loaded from backend environment variables (<code className="text-zinc-300 font-mono text-[10px]">process.env</code>). No client API key exposure.
-            </p>
-          </div>
+
         </div>
 
         {/* Footer */}

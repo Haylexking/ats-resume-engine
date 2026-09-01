@@ -431,15 +431,8 @@ export default function Home() {
 
       {/* Footer & Copyright */}
       <footer className="w-full border-t border-white/[0.06] bg-[#07090e] py-6 text-center text-xs text-zinc-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
-            <span>© 2026 Built by <strong className="text-zinc-200 font-semibold">Alexander Akerele</strong></span>
-            <span>•</span>
-            <span className="text-emerald-400 font-medium">Personal ATS Optimization Engine</span>
-          </div>
-          <div className="text-[11px] text-zinc-500 font-mono">
-            Pure Frontier AI • Multi-Model Reasoning • Zero Heuristic Fallbacks
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center">
+          <span>© 2026 Built by <strong className="text-zinc-300 font-semibold">Alexander Akerele</strong></span>
         </div>
       </footer>
 
