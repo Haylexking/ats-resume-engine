@@ -40,31 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Segmented Navigation Bar */}
-        <nav className="hidden md:flex items-center space-x-1 rounded-xl bg-zinc-900/80 p-1 border border-white/[0.06] shadow-inner">
-          <button
-            onClick={() => setActiveTab('studio')}
-            className={`flex items-center space-x-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
-              activeTab === 'studio'
-                ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-white/[0.08]'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5 text-zinc-300" />
-            <span>ATS Matcher Studio</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center space-x-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
-              activeTab === 'history'
-                ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-white/[0.08]'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
-            }`}
-          >
-            <History className="h-3.5 w-3.5 text-zinc-300" />
-            <span>Applications &amp; Calibration</span>
-          </button>
-        </nav>
+
 
         {/* Model Status Pill & Settings */}
         <div className="flex items-center space-x-2.5">

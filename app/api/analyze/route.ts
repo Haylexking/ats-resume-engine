@@ -21,20 +21,23 @@ export async function POST(req: Request) {
 
     const targetResumeText = resumeText || customResumeText;
 
-    if (!jdText || !jdText.trim()) {
+    const cleanJd = (jdText || '').trim().slice(0, 50000);
+    const cleanResume = (targetResumeText || '').trim().slice(0, 50000);
+
+    if (!cleanJd) {
       return NextResponse.json({ error: 'Job description text is required' }, { status: 400 });
     }
 
-    if (!targetResumeText || !targetResumeText.trim()) {
+    if (!cleanResume) {
       return NextResponse.json({ error: 'Candidate resume text or document is required' }, { status: 400 });
     }
 
     // Step 1: Parse candidate resume into structured schema
-    const targetResume: MasterResume = await parseResumeText(targetResumeText, aiSettings);
+    const targetResume: MasterResume = await parseResumeText(cleanResume, aiSettings);
 
     // Step 2: Parse JD into structured JSON (Role, Competencies, and Sector Context)
     const t0 = Date.now();
-    const parsedJD = await parseJobDescription(jdText, aiSettings, CURRENT_PROMPT_VERSIONS.parse);
+    const parsedJD = await parseJobDescription(cleanJd, aiSettings, CURRENT_PROMPT_VERSIONS.parse);
     const t1 = Date.now();
 
     const targetIndustry = (parsedJD.company_context || 'General') as TargetIndustry;

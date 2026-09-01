@@ -346,142 +346,15 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
             </select>
           </div>
 
-          {/* API Keys Management */}
-          <div className="space-y-3 pt-3 border-t border-white/[0.06]">
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-              <Key className="h-3.5 w-3.5 text-zinc-400" />
-              API Key Management
-            </h4>
-
-            {/* Groq Key */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs text-zinc-300">Groq API Key</label>
-                {apiKeys.groq && (
-                  <span className="text-[10px] text-emerald-400 font-mono">Configured</span>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  type={showKeys.groq ? 'text' : 'password'}
-                  value={apiKeys.groq || ''}
-                  onChange={(e) => setApiKeys({ ...apiKeys, groq: e.target.value })}
-                  placeholder="gsk_..."
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:border-orange-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKeys({ ...showKeys, groq: !showKeys.groq })}
-                  className="absolute right-2.5 top-2 text-zinc-500 hover:text-zinc-300"
-                >
-                  {showKeys.groq ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
+          {/* Server-Side Security & Inference Indicator */}
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-4 space-y-2">
+            <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-300">
+              <Key className="h-4 w-4 text-emerald-400" />
+              <span>Server-Side Security &amp; Inference</span>
             </div>
-
-            {/* NVIDIA Key */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs text-zinc-300">NVIDIA API Key</label>
-                {apiKeys.nvidia && (
-                  <span className="text-[10px] text-emerald-400 font-mono">Configured</span>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  type={showKeys.nvidia ? 'text' : 'password'}
-                  value={apiKeys.nvidia || ''}
-                  onChange={(e) => setApiKeys({ ...apiKeys, nvidia: e.target.value })}
-                  placeholder="nvapi-..."
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:border-emerald-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKeys({ ...showKeys, nvidia: !showKeys.nvidia })}
-                  className="absolute right-2.5 top-2 text-zinc-500 hover:text-zinc-300"
-                >
-                  {showKeys.nvidia ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Gemini Key */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs text-zinc-300">Gemini API Key</label>
-                {apiKeys.gemini && (
-                  <span className="text-[10px] text-emerald-400 font-mono">Configured</span>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  type={showKeys.gemini ? 'text' : 'password'}
-                  value={apiKeys.gemini || ''}
-                  onChange={(e) => setApiKeys({ ...apiKeys, gemini: e.target.value })}
-                  placeholder="Paste Gemini API Key..."
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:border-zinc-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKeys({ ...showKeys, gemini: !showKeys.gemini })}
-                  className="absolute right-2.5 top-2 text-zinc-500 hover:text-zinc-300"
-                >
-                  {showKeys.gemini ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* OpenAI Key */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs text-zinc-300">OpenAI API Key</label>
-                {apiKeys.openai && (
-                  <span className="text-[10px] text-emerald-400 font-mono">Configured</span>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  type={showKeys.openai ? 'text' : 'password'}
-                  value={apiKeys.openai || ''}
-                  onChange={(e) => setApiKeys({ ...apiKeys, openai: e.target.value })}
-                  placeholder="sk-..."
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:border-zinc-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKeys({ ...showKeys, openai: !showKeys.openai })}
-                  className="absolute right-2.5 top-2 text-zinc-500 hover:text-zinc-300"
-                >
-                  {showKeys.openai ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Anthropic Key */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs text-zinc-300">Anthropic API Key</label>
-                {apiKeys.anthropic && (
-                  <span className="text-[10px] text-emerald-400 font-mono">Configured</span>
-                )}
-              </div>
-              <div className="relative">
-                <input
-                  type={showKeys.anthropic ? 'text' : 'password'}
-                  value={apiKeys.anthropic || ''}
-                  onChange={(e) => setApiKeys({ ...apiKeys, anthropic: e.target.value })}
-                  placeholder="sk-ant-..."
-                  className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:border-zinc-500 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKeys({ ...showKeys, anthropic: !showKeys.anthropic })}
-                  className="absolute right-2.5 top-2 text-zinc-500 hover:text-zinc-300"
-                >
-                  {showKeys.anthropic ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-            </div>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              API credentials are secure and loaded from backend environment variables (<code className="text-zinc-300 font-mono text-[10px]">process.env</code>). No client API key exposure.
+            </p>
           </div>
         </div>
 

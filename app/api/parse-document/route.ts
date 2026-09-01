@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import mammoth from 'mammoth';
 import { extractTextFromPDF } from '@/lib/engine/pdfExtractor';
 
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB limit
+const ALLOWED_EXTENSIONS = new Set(['pdf', 'docx', 'doc', 'txt']);
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -11,8 +14,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    const filename = file.name || 'document';
-    const ext = filename.split('.').pop()?.toLowerCase();
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: 'File size exceeds maximum permitted limit of 10MB.' },
+        { status: 413 }
+      );
+    }
+
+    const filename = (file.name || 'document').slice(0, 100);
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return NextResponse.json(
+        { error: 'Unsupported file format. Please upload a PDF (.pdf), Word document (.docx), or plain text (.txt).' },
+        { status: 400 }
+      );
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -26,12 +44,9 @@ export async function POST(req: Request) {
         extractedText = await extractTextFromPDF(buffer);
       } catch (pdfErr: any) {
         console.error('PDF extraction failed:', pdfErr);
-        throw new Error('Could not parse PDF text streams: ' + (pdfErr?.message || 'Unknown error'));
+        throw new Error('Could not parse PDF text streams. Please ensure the PDF contains selectable text and is not a scanned image.');
       }
-    } else if (ext === 'txt') {
-      extractedText = buffer.toString('utf-8');
     } else {
-      // Default to utf-8 text read
       extractedText = buffer.toString('utf-8');
     }
 
@@ -45,12 +60,15 @@ export async function POST(req: Request) {
       );
     }
 
+    // Sanitize text length to prevent memory saturation
+    const sanitizedText = extractedText.trim().slice(0, 100000);
+
     return NextResponse.json({
       success: true,
       filename,
-      extractedText: extractedText.trim(),
-      charCount: extractedText.length,
-      wordCount: extractedText.split(/\s+/).filter(Boolean).length,
+      extractedText: sanitizedText,
+      charCount: sanitizedText.length,
+      wordCount: sanitizedText.split(/\s+/).filter(Boolean).length,
     });
   } catch (err: any) {
     console.error('Document parsing error:', err);
