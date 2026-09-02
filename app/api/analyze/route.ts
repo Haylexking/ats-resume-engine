@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { saveJobApplication } from '@/lib/db';
-import { parseJobDescription, parseResumeText } from '@/lib/engine/jdParser';
+import { parseJobDescription } from '@/lib/engine/jdParser';
+import { parseResumeText } from '@/lib/engine/resumeParser';
 import { scoreResumeAgainstJD } from '@/lib/engine/atsScorer';
 import { generateTieredRecommendations } from '@/lib/engine/recommendationEngine';
 import { TargetIndustry, JobApplicationRecord, AISettingConfig, MasterResume, ReasoningStep } from '@/lib/engine/types';

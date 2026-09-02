@@ -13,7 +13,6 @@
     "@anthropic-ai/sdk": "^0.30.0",
     "@google/generative-ai": "^0.21.0",
     "@types/pdf-parse": "^1.1.5",
-    "better-sqlite3": "^11.5.0",
     "clsx": "^2.1.1",
     "docx": "^9.0.3",
     "lucide-react": "^0.453.0",
@@ -26,7 +25,6 @@
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.17.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
