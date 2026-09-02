@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { X, Key, Check, Eye, EyeOff, Sparkles, Cpu, Layers, Zap } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Check, Sparkles, Cpu, Layers, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { AISettingConfig, AIProvider } from '@/lib/engine/types';
 
 interface AISettingsModalProps {
@@ -106,12 +106,12 @@ const MODEL_OPTIONS: Record<AIProvider, { id: string; name: string }[]> = {
     { id: 'adept/fuyu-8b', name: 'Adept Fuyu 8B' },
   ],
   groq: [
-    { id: 'qwen/qwen3.8-27b', name: 'Qwen 3.8 27B (Ultra-Low Latency & JSON Parsing)' },
     { id: 'groq/compound-mini', name: 'Groq Compound Mini (Fast Reasoning)' },
     { id: 'groq/compound', name: 'Groq Compound (Deep Multi-Stage Reasoning)' },
+    { id: 'qwen/qwen3.8-27b', name: 'Qwen 3.8 27B (Ultra-Low Latency & JSON Parsing)' },
+    { id: 'qwen/qwen3.6-27b', name: 'Qwen 3.6 27B' },
     { id: 'openai/gpt-oss-120b', name: 'OpenAI GPT OSS 120B' },
     { id: 'openai/gpt-oss-20b', name: 'OpenAI GPT OSS 20B' },
-    { id: 'qwen/qwen3.6-27b', name: 'Qwen 3.6 27B' },
     { id: 'allam-2-7b', name: 'ALLaM 2 7B' },
     { id: 'canopylabs/orpheus-v1-english', name: 'CanopyLabs Orpheus v1 English' },
     { id: 'canopylabs/orpheus-arabic-saudi', name: 'CanopyLabs Orpheus Arabic' },
@@ -122,8 +122,8 @@ const MODEL_OPTIONS: Record<AIProvider, { id: string; name: string }[]> = {
     { id: 'whisper-large-v3-turbo', name: 'Whisper Large v3 Turbo' },
   ],
   gemini: [
-    { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Structured Parsing & Extraction)' },
     { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash (Reasoning & Suggestions)' },
+    { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (Structured Parsing & Extraction)' },
     { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash (Fast Parsing)' },
     { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Ultra-Low Latency)' },
   ],
@@ -149,29 +149,85 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
 }) => {
   const [provider, setProvider] = useState<AIProvider>(currentSettings.provider);
   const [model, setModel] = useState<string>(currentSettings.model);
-  const [modelParse, setModelParse] = useState<string>(currentSettings.modelParse || 'meta/llama-3.2-11b-vision-instruct');
-  const [modelReason, setModelReason] = useState<string>(currentSettings.modelReason || 'meta/llama-3.2-11b-vision-instruct');
+  const [modelParse, setModelParse] = useState<string>(currentSettings.modelParse || 'qwen/qwen3.8-27b');
+  const [modelReason, setModelReason] = useState<string>(currentSettings.modelReason || 'groq/compound-mini');
   const [secondaryProvider, setSecondaryProvider] = useState<AIProvider | undefined>(currentSettings.secondaryProvider);
   const [secondaryModel, setSecondaryModel] = useState<string | undefined>(currentSettings.secondaryModel);
   const [apiKeys, setApiKeys] = useState(currentSettings.apiKeys);
-  const [showKeys, setShowKeys] = useState<{ [key: string]: boolean }>({});
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Search filter term for instant model lookup
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     setProvider(currentSettings.provider);
     setModel(currentSettings.model);
     setModelParse(currentSettings.modelParse || (currentSettings.provider === 'nvidia' ? 'meta/llama-3.2-11b-vision-instruct' : currentSettings.provider === 'groq' ? 'qwen/qwen3.8-27b' : 'gemini-3.6-flash'));
-    setModelReason(currentSettings.modelReason || (currentSettings.provider === 'nvidia' ? 'meta/llama-3.2-11b-vision-instruct' : currentSettings.provider === 'groq' ? 'groq/compound-mini' : 'gemini-3.7-flash'));
+    setModelReason(currentSettings.modelReason || (currentSettings.provider === 'nvidia' ? 'meta/llama-3.2-90b-vision-instruct' : currentSettings.provider === 'groq' ? 'groq/compound-mini' : 'gemini-3.7-flash'));
     setSecondaryProvider(currentSettings.secondaryProvider);
     setSecondaryModel(currentSettings.secondaryModel);
     setApiKeys(currentSettings.apiKeys);
-  }, [currentSettings]);
+    setSearchTerm('');
+  }, [currentSettings, isOpen]);
+
+  // Available models for current provider
+  const availableModels = useMemo(() => {
+    return MODEL_OPTIONS[provider] || [];
+  }, [provider]);
+
+  // Filtered models based on user search query
+  const filteredModels = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return availableModels;
+    return availableModels.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
+    );
+  }, [availableModels, searchTerm]);
+
+  // Auto-selection when typed query matches an exact ID or single result
+  const handleSearchChange = (typed: string) => {
+    setSearchTerm(typed);
+    const q = typed.trim().toLowerCase();
+    if (!q) return;
+
+    // Check exact match on ID or name
+    const exactMatch = availableModels.find(
+      (m) => m.id.toLowerCase() === q || m.name.toLowerCase() === q
+    );
+    if (exactMatch) {
+      selectModel(exactMatch.id);
+      return;
+    }
+
+    // Check single filtered match
+    const matches = availableModels.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)
+    );
+    if (matches.length === 1) {
+      selectModel(matches[0].id);
+    }
+  };
+
+  const selectModel = (selectedModelId: string) => {
+    setModel(selectedModelId);
+    setModelReason(selectedModelId);
+    if (provider === 'groq') {
+      setModelParse('qwen/qwen3.8-27b');
+    } else if (provider === 'nvidia') {
+      setModelParse('meta/llama-3.2-11b-vision-instruct');
+    } else if (provider === 'gemini') {
+      setModelParse('gemini-3.6-flash');
+    } else {
+      setModelParse(selectedModelId);
+    }
+  };
 
   // Update model default when provider changes
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);
-    const availableModels = MODEL_OPTIONS[newProvider];
-    if (availableModels && availableModels.length > 0) {
+    setSearchTerm('');
+    const models = MODEL_OPTIONS[newProvider];
+    if (models && models.length > 0) {
       if (newProvider === 'groq') {
         setModel('groq/compound-mini');
         setModelParse('qwen/qwen3.8-27b');
@@ -185,7 +241,9 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
         setModelParse('gemini-3.6-flash');
         setModelReason('gemini-3.7-flash');
       } else {
-        setModel(availableModels[0].id);
+        setModel(models[0].id);
+        setModelParse(models[0].id);
+        setModelReason(models[0].id);
       }
     }
   };
@@ -208,6 +266,9 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+  const currentModelMeta = availableModels.find((m) => m.id === model);
+  const isSearchEmpty = searchTerm.trim().length > 0 && filteredModels.length === 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
@@ -255,45 +316,108 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Model Preset Selector */}
-          <div className="space-y-2">
+          {/* Model Search & Smart Autocomplete */}
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Reasoning Model Architecture
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5 text-zinc-400" />
+                <span>Search &amp; Auto-Select Model ({availableModels.length} in catalog)</span>
               </label>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="text-[10px] text-zinc-500 hover:text-zinc-300"
+                >
+                  Clear search
+                </button>
+              )}
             </div>
-            <select
-              value={MODEL_OPTIONS[provider]?.some((m) => m.id === model) ? model : 'custom'}
-              onChange={(e) => {
-                if (e.target.value !== 'custom') {
-                  setModel(e.target.value);
-                  setModelParse(e.target.value);
-                  setModelReason(e.target.value);
-                }
-              }}
-              className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-2 text-xs text-zinc-200 focus:border-zinc-500 focus:outline-none"
-            >
-              {MODEL_OPTIONS[provider]?.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.id})
-                </option>
-              ))}
-              <option value="custom">Custom Model Identifier...</option>
-            </select>
 
-            {/* Custom Model Input */}
-            <div>
+            {/* Search Input Box */}
+            <div className="relative">
               <input
                 type="text"
-                value={model}
-                onChange={(e) => {
-                  setModel(e.target.value);
-                  setModelParse(e.target.value);
-                  setModelReason(e.target.value);
-                }}
-                placeholder="Or type custom model ID (e.g. meta/llama-3.2-11b-vision-instruct)..."
-                className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-1.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:border-zinc-500 focus:outline-none"
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder={`Type model name or ID (e.g. ${provider === 'groq' ? 'compound, qwen' : provider === 'nvidia' ? 'llama-3.3, r1, deepseek, minimax' : 'flash, sonnet, gpt-4o'})...`}
+                className="w-full rounded-xl border border-white/[0.1] bg-[#09090b] px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 transition"
               />
+            </div>
+
+            {/* Error Banner if Model Not Found */}
+            {isSearchEmpty && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-3 text-xs text-rose-300 flex items-start gap-2 animate-fade-in">
+                <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-rose-200">
+                    Model &quot;{searchTerm}&quot; not found in {provider.toUpperCase()} catalog
+                  </div>
+                  <p className="text-[11px] text-rose-300/80 mt-0.5">
+                    No matching model architecture was found. Check your spelling or choose from the list below.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Dropdown Select (Synced with Active Filter & Selection) */}
+            <div>
+              <select
+                value={model}
+                onChange={(e) => selectModel(e.target.value)}
+                className="w-full rounded-lg border border-white/[0.08] bg-[#09090b] px-3 py-2 text-xs text-zinc-200 focus:border-zinc-500 focus:outline-none"
+              >
+                {filteredModels.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Quick Match Suggestion Chips (when searching or for fast picking) */}
+            {searchTerm && filteredModels.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[10px] text-zinc-500 font-medium block">
+                  Matching Models ({filteredModels.length}):
+                </span>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-black/40 rounded-lg border border-white/[0.04]">
+                  {filteredModels.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => selectModel(m.id)}
+                      className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition text-left ${
+                        model === m.id
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                          : 'bg-zinc-900 text-zinc-300 border border-white/[0.06] hover:bg-zinc-800'
+                      }`}
+                    >
+                      <span>{m.id === model ? '✓' : '•'}</span>
+                      <span className="truncate max-w-[200px]">{m.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Active Selected Model Confirmation Card */}
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-3 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 block">
+                  Active Selected Model:
+                </span>
+                <span className="text-xs font-semibold text-zinc-100 truncate block mt-0.5">
+                  {currentModelMeta?.name || model}
+                </span>
+                <span className="text-[10px] font-mono text-zinc-400 truncate block">
+                  {model}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1 text-emerald-400 text-xs font-semibold shrink-0 bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 rounded-lg">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Active</span>
+              </div>
             </div>
           </div>
 
@@ -302,15 +426,15 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
             <div className="rounded-xl border border-white/[0.06] bg-[#09090b] p-3 space-y-2 text-xs">
               <div className="flex items-center gap-1.5 font-medium text-zinc-300 text-[11px]">
                 <Layers className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                <span>Single-Run Model Configuration</span>
+                <span>Multi-Pass Execution Pipeline</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                 <div className="bg-zinc-900/80 p-2 rounded-lg border border-white/[0.04] min-w-0">
-                  <span className="text-zinc-500 block text-[10px]">Parse / Extract Step:</span>
+                  <span className="text-zinc-500 block text-[10px]">Pass 1 (JSON Parsing):</span>
                   <span className="font-mono text-zinc-200 font-medium truncate block">{modelParse}</span>
                 </div>
                 <div className="bg-zinc-900/80 p-2 rounded-lg border border-white/[0.04] min-w-0">
-                  <span className="text-zinc-500 block text-[10px]">Reason / Rewrites Step:</span>
+                  <span className="text-zinc-500 block text-[10px]">Pass 2 &amp; 3 (Reasoning &amp; Diffs):</span>
                   <span className="font-mono text-zinc-200 font-medium truncate block">{modelReason}</span>
                 </div>
               </div>
