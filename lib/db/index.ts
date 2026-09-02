@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { MasterResume, JobApplicationRecord, AISettingConfig, OutcomeRecord } from '../engine/types';
+import { MasterResume, JobApplicationRecord, AISettingConfig, OutcomeRecord, ScreeningOutcome } from '../engine/types';
 
 // Use /tmp for writable storage in serverless environments (e.g. Vercel)
 const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
@@ -76,7 +76,7 @@ export function saveJobApplication(app: JobApplicationRecord): void {
 
 export function updateScreeningOutcome(
   id: string,
-  outcome: 'passed_ats' | 'rejected_ats' | 'interview_scheduled' | 'no_response' | 'pending',
+  outcome: ScreeningOutcome,
   appliedAt?: string,
   parseabilityDiff?: string[]
 ): void {

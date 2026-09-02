@@ -1,5 +1,5 @@
 import { MasterResume, ParsedJD, ScoreBreakdown, TieredSuggestion, AISettingConfig, RecruiterInsights } from './types';
-import { callLLMWithTrace } from './llmClient';
+import { callLLMWithTrace, callLLMJSON } from './llmClient';
 import { getPromptTemplate } from './prompts';
 import { isBlacklistedKeyword, cleanResponsibilityText } from './jdParser';
 

@@ -8,7 +8,7 @@ interface ParseabilityHarnessModalProps {
   isOpen: boolean;
   onClose: () => void;
   result: ParseabilityResult | null;
-  industry: TargetIndustry;
+  industry?: string;
   onDownloadDocx: () => void;
   onDownloadTxt: () => void;
 }

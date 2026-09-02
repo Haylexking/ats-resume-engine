@@ -16,6 +16,7 @@ import {
   JobApplicationRecord,
   TieredSuggestion,
   ParseabilityResult,
+  ScreeningOutcome,
 } from '@/lib/engine/types';
 import { Download, FileCheck, Sparkles, RefreshCw, Cpu, Key, ArrowRight } from 'lucide-react';
 
@@ -228,7 +229,7 @@ export default function Home() {
   // Handle Application Outcome Update
   const handleOutcomeChange = async (
     appId: string,
-    outcome: 'pending' | 'callback' | 'interview' | 'rejection' | 'offer'
+    outcome: ScreeningOutcome
   ) => {
     try {
       const res = await fetch('/api/applications', {

@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { History, Award, CheckCircle2, XCircle, Calendar, ArrowUpRight, ShieldCheck, AlertTriangle, FileCode } from 'lucide-react';
-import { JobApplicationRecord } from '@/lib/engine/types';
+import { JobApplicationRecord, ScreeningOutcome } from '@/lib/engine/types';
 
 interface HistoryTrackerViewProps {
   applications: JobApplicationRecord[];
   onUpdateOutcome: (
     id: string,
-    outcome: 'passed_ats' | 'rejected_ats' | 'interview_scheduled' | 'no_response' | 'pending'
+    outcome: ScreeningOutcome
   ) => void;
 }
 

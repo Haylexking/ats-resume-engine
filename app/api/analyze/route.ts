@@ -73,10 +73,10 @@ export async function POST(req: Request) {
         phase: 'Phase 2: 3-Pass ATS Matching & Semantic Alignment',
         model: aiSettings.modelReason || aiSettings.model,
         durationMs: t2 - t1,
-        thoughts: `Executed 3-pass scoring algorithm against candidate resume. Hard keyword match achieved: ${scores.matched_keywords.length} keywords matched (${scores.missing_required_keywords.length} missing required). Semantic narrative coverage: ${scores.responsibility_coverage.filter((r) => r.is_covered).length}/${scores.responsibility_coverage.length} responsibilities evidenced. Computed overall composite score: ${scores.overall_score}%.`,
+        thoughts: `Executed 3-pass scoring algorithm against candidate resume. Hard keyword match achieved: ${scores.matched_keywords.length} keywords matched (${scores.missing_required_keywords.length} missing required). Semantic narrative coverage: ${scores.responsibility_coverage.filter((r) => r.is_covered).length}/${scores.responsibility_coverage.length} responsibilities evidenced. Computed overall composite score: ${scores.composite_score}%.`,
         keyConclusions: [
-          `Overall ATS Score: ${scores.overall_score}%`,
-          `Hard Keywords: ${scores.hard_keyword_score}% (${scores.matched_keywords.length} matched)`,
+          `Overall ATS Score: ${scores.composite_score}%`,
+          `Hard Keywords: ${scores.hard_match_score}% (${scores.matched_keywords.length} matched)`,
           `Semantic Coverage: ${scores.responsibility_coverage.filter((r) => r.is_covered).length}/${scores.responsibility_coverage.length} responsibilities evidenced`,
         ],
       },

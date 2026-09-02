@@ -83,7 +83,6 @@ const SYNONYM_MAP: Record<string, string[]> = {
   'llm': ['large language model', 'large language models', 'llms'],
   'llms': ['large language model', 'large language models', 'llm'],
   'ml': ['machine learning'],
-  'machine learning': ['ml'],
   'ai': ['artificial intelligence'],
   'artificial intelligence': ['ai'],
   'nlp': ['natural language processing'],

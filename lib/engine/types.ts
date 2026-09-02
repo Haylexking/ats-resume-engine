@@ -142,6 +142,17 @@ export interface ReasoningStep {
   keyConclusions?: string[];
 }
 
+export type ScreeningOutcome =
+  | 'passed_ats'
+  | 'rejected_ats'
+  | 'interview_scheduled'
+  | 'no_response'
+  | 'pending'
+  | 'callback'
+  | 'interview'
+  | 'rejection'
+  | 'offer';
+
 export interface JobApplicationRecord {
   id: string;
   created_at: string;
@@ -154,7 +165,7 @@ export interface JobApplicationRecord {
   suggestions: TieredSuggestion[];
   recruiter_insights?: RecruiterInsights;
   reasoning_trace?: ReasoningStep[];
-  screening_outcome?: 'passed_ats' | 'rejected_ats' | 'interview_scheduled' | 'no_response' | 'pending';
+  screening_outcome?: ScreeningOutcome;
   applied_at?: string;
   parseability_diff?: string[];
   prompt_versions?: {
@@ -173,7 +184,7 @@ export interface OutcomeRecord {
   keyword_match_percent: number;
   semantic_score: number;
   formatting_score: number;
-  screening_outcome: 'passed_ats' | 'rejected_ats' | 'interview_scheduled' | 'no_response' | 'pending';
+  screening_outcome: ScreeningOutcome;
   applied_at: string;
   created_at: string;
   parseability_warnings_count: number;
