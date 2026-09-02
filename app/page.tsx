@@ -262,18 +262,18 @@ export default function Home() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
         {activeTab === 'studio' && (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* Error Notification Banner with Instant 1-Click Model Switch */}
             {analysisError && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-4 text-xs text-rose-300 animate-fade-in shadow-xl space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-2.5">
+              <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 p-3.5 sm:p-4 text-xs text-rose-300 animate-fade-in shadow-xl space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start space-x-2.5 min-w-0">
                     <div className="h-2 w-2 rounded-full bg-rose-400 mt-1 flex-shrink-0 animate-ping" />
-                    <div>
+                    <div className="min-w-0">
                       <span className="font-semibold text-rose-200">Analysis Halted:</span>
-                      <p className="mt-0.5 text-rose-300 font-mono text-[11px] leading-relaxed">
+                      <p className="mt-0.5 text-rose-300 font-mono text-[11px] leading-relaxed break-words">
                         {analysisError}
                       </p>
                     </div>
@@ -281,14 +281,14 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setAnalysisError(null)}
-                    className="text-rose-400 hover:text-rose-200 text-xs ml-4"
+                    className="text-rose-400 hover:text-rose-200 text-xs shrink-0"
                   >
                     Dismiss
                   </button>
                 </div>
 
                 {/* 1-Click Switch Bar */}
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-rose-500/20 text-[11px]">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 border-t border-rose-500/20 text-[11px]">
                   <span className="text-zinc-400 font-medium">Switch to another model:</span>
                   <button
                     type="button"
@@ -320,21 +320,6 @@ export default function Home() {
                   >
                     🟢 NVIDIA Llama 90B
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleSaveSettings({
-                        ...aiSettings,
-                        provider: 'nvidia',
-                        model: 'minimaxai/minimax-m3',
-                        modelParse: 'minimaxai/minimax-m3',
-                        modelReason: 'minimaxai/minimax-m3',
-                      });
-                    }}
-                    className="rounded-md bg-zinc-900 hover:bg-zinc-800 px-2.5 py-1 text-blue-300 border border-blue-500/30 transition active:scale-95 font-medium"
-                  >
-                    🔵 MiniMax M3
-                  </button>
                 </div>
               </div>
             )}
@@ -349,7 +334,7 @@ export default function Home() {
 
             {/* Analysis Results Section */}
             {currentApp ? (
-              <div className="space-y-6 animate-fade-in">
+              <div className="space-y-5 sm:space-y-6 animate-fade-in">
                 {/* 🧠 Live Model Reasoning & Chain of Thought Trace */}
                 <ModelReasoningTrace trace={currentApp.reasoning_trace} />
 
@@ -357,15 +342,15 @@ export default function Home() {
                 <ScoreGauges scores={currentApp.scores} parsedJD={currentApp.parsed_jd} />
 
                 {/* Interactive 3-Tier Suggestion Diff */}
-                <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-6 shadow-2xl space-y-6">
+                <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-4 sm:p-6 shadow-2xl space-y-5 sm:space-y-6">
                   <TieredSuggestionsDiff
                     suggestions={suggestions}
                     onToggleStatus={handleToggleSuggestionStatus}
                   />
 
                   {/* Parseability Harness & Export Actions */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-white/[0.06]">
-                    <div className="text-xs text-zinc-400">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-5 sm:pt-6 border-t border-white/[0.06]">
+                    <div className="text-xs text-zinc-400 text-center sm:text-left">
                       Accepted rewrites:{' '}
                       <span className="font-mono font-bold text-emerald-400">
                         {suggestions.filter((s) => s.status === 'accepted').length}
@@ -376,29 +361,29 @@ export default function Home() {
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-3">
+                    <div className="grid grid-cols-1 sm:flex sm:items-center gap-2 sm:space-x-3">
                       <button
                         onClick={handleInspectParseability}
                         disabled={isExporting}
-                        className="flex items-center space-x-1.5 rounded-xl border border-white/[0.08] bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white hover:border-zinc-700 active:scale-[0.98]"
+                        className="flex items-center justify-center space-x-1.5 rounded-xl border border-white/[0.08] bg-zinc-900 px-4 py-2.5 sm:py-2 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white hover:border-zinc-700 active:scale-[0.98] w-full sm:w-auto"
                       >
-                        <FileCheck className="h-3.5 w-3.5 text-zinc-400" />
+                        <FileCheck className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                         <span>Inspect Parseability</span>
                       </button>
 
                       <button
                         onClick={handleDownloadDocx}
-                        className="flex items-center space-x-1.5 rounded-xl bg-zinc-100 px-5 py-2 text-xs font-semibold text-zinc-900 transition-all hover:bg-white hover:shadow-lg active:scale-[0.98]"
+                        className="flex items-center justify-center space-x-1.5 rounded-xl bg-zinc-100 px-5 py-2.5 sm:py-2 text-xs font-semibold text-zinc-900 transition-all hover:bg-white hover:shadow-lg active:scale-[0.98] w-full sm:w-auto cursor-pointer"
                       >
-                        <Download className="h-3.5 w-3.5 text-zinc-900" />
+                        <Download className="h-3.5 w-3.5 text-zinc-900 shrink-0" />
                         <span>Export Word (.docx)</span>
                       </button>
 
                       <button
                         onClick={handleDownloadTxt}
-                        className="flex items-center space-x-1.5 rounded-xl border border-white/[0.08] bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white active:scale-[0.98]"
+                        className="flex items-center justify-center space-x-1.5 rounded-xl border border-white/[0.08] bg-zinc-900 px-4 py-2.5 sm:py-2 text-xs font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white active:scale-[0.98] w-full sm:w-auto cursor-pointer"
                       >
-                        <Download className="h-3.5 w-3.5 text-zinc-400" />
+                        <Download className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                         <span>Plain Text (.txt)</span>
                       </button>
                     </div>
@@ -409,12 +394,12 @@ export default function Home() {
                 <RecruiterInsightsCard insights={currentApp.recruiter_insights} />
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-zinc-800/80 bg-[#111114]/40 p-12 text-center space-y-3">
+              <div className="rounded-2xl border border-dashed border-zinc-800/80 bg-[#111114]/40 p-6 sm:p-12 text-center space-y-3">
                 <div className="h-10 w-10 rounded-xl bg-zinc-900 border border-white/[0.06] flex items-center justify-center mx-auto text-zinc-400">
                   <Sparkles className="h-5 w-5" />
                 </div>
-                <h3 className="text-sm font-semibold text-zinc-200">Ready for ATS Matching</h3>
-                <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                <h3 className="text-xs sm:text-sm font-semibold text-zinc-200">Ready for ATS Matching</h3>
+                <p className="text-xs text-zinc-500 max-w-sm mx-auto leading-relaxed">
                   Paste any target Job Description and upload or paste candidate resume text above, then click &quot;Run ATS Match &amp; Gap Engine&quot; to inspect 3-pass scoring and recruiter rewrites.
                 </p>
               </div>

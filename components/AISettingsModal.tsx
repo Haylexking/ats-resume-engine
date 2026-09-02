@@ -210,13 +210,15 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#111114] shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
+      <div className="w-full max-w-xl rounded-2xl border border-white/[0.08] bg-[#111114] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 sm:px-6 py-3.5 sm:py-4 shrink-0">
           <div className="flex items-center space-x-2">
-            <Cpu className="h-4 w-4 text-zinc-300" />
-            <h3 className="text-sm font-semibold text-zinc-100">AI Provider & Model Settings</h3>
+            <Cpu className="h-4 w-4 text-zinc-300 shrink-0" />
+            <h3 className="text-xs sm:text-sm font-semibold text-zinc-100">
+              AI Model &amp; Provider Configuration
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -226,37 +228,38 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-          {/* Provider Selector */}
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
+          {/* Active Provider Selector */}
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
-              Primary LLM Provider
+              Frontier Model Provider
             </label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {(['nvidia', 'groq', 'gemini', 'openai', 'anthropic', 'mock'] as AIProvider[]).map((p) => (
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2">
+              {(['groq', 'nvidia', 'gemini', 'openai', 'anthropic'] as AIProvider[]).map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => handleProviderChange(p)}
-                  className={`flex flex-col items-center justify-center p-2.5 rounded-lg border text-xs font-medium transition-all ${
+                  className={`flex flex-col items-center justify-center rounded-xl border p-2 sm:p-2.5 text-center transition ${
                     provider === p
-                      ? 'border-emerald-500 bg-emerald-950/40 text-emerald-300 ring-1 ring-emerald-500/50'
-                      : 'border-white/[0.06] bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                      ? 'border-zinc-200 bg-zinc-800 text-white shadow-sm'
+                      : 'border-white/[0.06] bg-[#09090b] text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                   }`}
                 >
-                  <span className="capitalize">{p === 'mock' ? 'Smart Mock' : p === 'nvidia' ? 'NVIDIA NIM' : p === 'groq' ? 'Groq LPU' : p}</span>
-                  {p === 'nvidia' && <span className="text-[9px] text-emerald-400 font-mono mt-0.5">High Speed</span>}
-                  {p === 'groq' && <span className="text-[9px] text-orange-400 font-mono mt-0.5">Ultra Fast</span>}
+                  <span className="text-xs font-semibold capitalize">{p}</span>
+                  <span className="text-[9px] text-zinc-500 font-mono mt-0.5">
+                    {p === 'groq' ? 'LPU Fast' : p === 'nvidia' ? 'Open NIM' : p === 'gemini' ? 'Google' : p === 'openai' ? 'GPT-4o' : 'Claude 3.5'}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Model Switcher Dropdown & Custom Model Input */}
+          {/* Model Preset Selector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Primary Model ({provider.toUpperCase()})
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                Reasoning Model Architecture
               </label>
             </div>
             <select
@@ -298,15 +301,15 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
           {(provider === 'nvidia' || provider === 'groq' || provider === 'gemini') && (
             <div className="rounded-xl border border-white/[0.06] bg-[#09090b] p-3 space-y-2 text-xs">
               <div className="flex items-center gap-1.5 font-medium text-zinc-300 text-[11px]">
-                <Layers className="h-3.5 w-3.5 text-zinc-400" />
+                <Layers className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                 <span>Single-Run Model Configuration</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div className="bg-zinc-900/80 p-2 rounded-lg border border-white/[0.04]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                <div className="bg-zinc-900/80 p-2 rounded-lg border border-white/[0.04] min-w-0">
                   <span className="text-zinc-500 block text-[10px]">Parse / Extract Step:</span>
                   <span className="font-mono text-zinc-200 font-medium truncate block">{modelParse}</span>
                 </div>
-                <div className="bg-zinc-900/80 p-2 rounded-lg border border-white/[0.04]">
+                <div className="bg-zinc-900/80 p-2 rounded-lg border border-white/[0.04] min-w-0">
                   <span className="text-zinc-500 block text-[10px]">Reason / Rewrites Step:</span>
                   <span className="font-mono text-zinc-200 font-medium truncate block">{modelReason}</span>
                 </div>
@@ -317,8 +320,8 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
           {/* Dual-Model Consensus Check */}
           <div className="pt-3 border-t border-white/[0.06]">
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-zinc-400" />
-              Dual-Model Consensus Check (Optional)
+              <Sparkles className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+              <span>Dual-Model Consensus Check (Optional)</span>
             </label>
             <p className="text-[11px] text-zinc-500 mb-2">
               Calls a secondary provider in parallel on gap-analysis. Items where models disagree are flagged for review.
@@ -345,21 +348,19 @@ export const AISettingsModal: React.FC<AISettingsModalProps> = ({
               <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
             </select>
           </div>
-
-
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 border-t border-white/[0.06] bg-[#09090b] px-6 py-4">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 border-t border-white/[0.06] bg-[#09090b] px-4 sm:px-6 py-3.5 sm:py-4 shrink-0">
           <button
             onClick={onClose}
-            className="rounded-lg border border-white/[0.08] bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition"
+            className="rounded-lg border border-white/[0.08] bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition text-center"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className={`flex items-center space-x-1.5 rounded-lg px-4 py-2 text-xs font-medium text-black transition active:scale-[0.98] ${
+            className={`flex items-center justify-center space-x-1.5 rounded-lg px-4 py-2 text-xs font-medium text-black transition active:scale-[0.98] cursor-pointer ${
               savedSuccess ? 'bg-emerald-400 text-black' : 'bg-white hover:bg-zinc-200'
             }`}
           >
