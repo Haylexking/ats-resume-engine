@@ -13,7 +13,7 @@ export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
     const aiSettings = getAISettings();
     const apiKey =
-      aiSettings.apiKeys.gemini ||
+      aiSettings?.apiKeys?.gemini ||
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_API_KEY ||
       '';

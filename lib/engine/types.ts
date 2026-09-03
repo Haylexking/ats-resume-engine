@@ -117,7 +117,7 @@ export interface AISettingConfig {
   modelReason?: string; // e.g. meta/llama-3.2-90b-vision-instruct or groq/compound
   secondaryProvider?: AIProvider;
   secondaryModel?: string;
-  apiKeys: {
+  apiKeys?: {
     nvidia?: string;
     groq?: string;
     gemini?: string;

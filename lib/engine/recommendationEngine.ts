@@ -111,10 +111,11 @@ DO NOT output robotic boilerplate phrases. Integrate keywords directly into acti
 
   // ACCURACY LOOP (2): Dual-Model Consensus check
   let secondarySuggestions: TieredSuggestion[] | null = null;
+  const secondaryEnvKey = config.secondaryProvider ? process.env[`${config.secondaryProvider.toUpperCase()}_API_KEY`] : undefined;
   if (
     config.secondaryProvider &&
     config.secondaryProvider !== config.provider &&
-    config.apiKeys[config.secondaryProvider as keyof typeof config.apiKeys]
+    (config.apiKeys?.[config.secondaryProvider as keyof typeof config.apiKeys] || secondaryEnvKey)
   ) {
     try {
       const secRaw = await callLLMJSON<any>(

@@ -33,18 +33,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Candidate resume text or document is required' }, { status: 400 });
     }
 
+    const safeAiSettings: AISettingConfig = {
+      provider: aiSettings?.provider || 'groq',
+      model: aiSettings?.model || 'groq/compound-mini',
+      modelParse: aiSettings?.modelParse || 'qwen/qwen3.8-27b',
+      modelReason: aiSettings?.modelReason || 'groq/compound-mini',
+      secondaryProvider: aiSettings?.secondaryProvider,
+      secondaryModel: aiSettings?.secondaryModel,
+      apiKeys: aiSettings?.apiKeys || {},
+    };
+
     // Step 1: Parse candidate resume into structured schema
-    const targetResume: MasterResume = await parseResumeText(cleanResume, aiSettings);
+    const targetResume: MasterResume = await parseResumeText(cleanResume, safeAiSettings);
 
     // Step 2: Parse JD into structured JSON (Role, Competencies, and Sector Context)
     const t0 = Date.now();
-    const parsedJD = await parseJobDescription(cleanJd, aiSettings, CURRENT_PROMPT_VERSIONS.parse);
+    const parsedJD = await parseJobDescription(cleanJd, safeAiSettings, CURRENT_PROMPT_VERSIONS.parse);
     const t1 = Date.now();
 
     const targetIndustry = (parsedJD.company_context || 'General') as TargetIndustry;
 
     // Step 3: Run 3-Pass ATS Matching and Scoring
-    const scores = await scoreResumeAgainstJD(targetResume, parsedJD, aiSettings, CURRENT_PROMPT_VERSIONS.score);
+    const scores = await scoreResumeAgainstJD(targetResume, parsedJD, safeAiSettings, CURRENT_PROMPT_VERSIONS.score);
     const t2 = Date.now();
 
     // Step 4: Generate Tiered Recommendations & Recruiter Insights
@@ -52,7 +62,7 @@ export async function POST(req: Request) {
       targetResume,
       parsedJD,
       scores,
-      aiSettings,
+      safeAiSettings,
       CURRENT_PROMPT_VERSIONS.recommend
     );
     const t3 = Date.now();
@@ -60,7 +70,7 @@ export async function POST(req: Request) {
     const reasoningTrace: ReasoningStep[] = [
       {
         phase: 'Phase 1: Job Description Structural Extraction',
-        model: aiSettings.modelParse || aiSettings.model,
+        model: safeAiSettings.modelParse || safeAiSettings.model,
         durationMs: t1 - t0,
         thoughts: `Analyzed raw job description text. Extracted target role "${parsedJD.title}" at "${parsedJD.company}" (Seniority: ${parsedJD.seniority_level}, Industry Context: ${parsedJD.company_context}). Identified ${parsedJD.hard_skills.length} core technical hard skills, ${parsedJD.keywords_exact.length} exact ATS terms, and ${parsedJD.qualifications_required.length} required qualifications.`,
         keyConclusions: [
@@ -71,7 +81,7 @@ export async function POST(req: Request) {
       },
       {
         phase: 'Phase 2: 3-Pass ATS Matching & Semantic Alignment',
-        model: aiSettings.modelReason || aiSettings.model,
+        model: safeAiSettings.modelReason || safeAiSettings.model,
         durationMs: t2 - t1,
         thoughts: `Executed 3-pass scoring algorithm against candidate resume. Hard keyword match achieved: ${scores.matched_keywords.length} keywords matched (${scores.missing_required_keywords.length} missing required). Semantic narrative coverage: ${scores.responsibility_coverage.filter((r) => r.is_covered).length}/${scores.responsibility_coverage.length} responsibilities evidenced. Computed overall composite score: ${scores.composite_score}%.`,
         keyConclusions: [
@@ -82,7 +92,7 @@ export async function POST(req: Request) {
       },
       {
         phase: 'Phase 3: 3-Tier Recruiter Synthesis & Executive Strategic Insights',
-        model: aiSettings.modelReason || aiSettings.model,
+        model: safeAiSettings.modelReason || safeAiSettings.model,
         durationMs: durationMs || (t3 - t2),
         thoughts: thinking || `Synthesized ${suggestions.filter((s) => s.tier === 1).length} Tier 1 authentic bullet rewrites, ${suggestions.filter((s) => s.tier === 2).length} Tier 2 additions, and formulated strategic positioning angles, interview talking points, and portfolio spotlight advice.`,
         keyConclusions: [

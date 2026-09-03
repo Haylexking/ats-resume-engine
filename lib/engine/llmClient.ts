@@ -74,9 +74,9 @@ export async function callLLMWithTrace<T>(
 
   try {
     if (provider === 'groq') {
-      const apiKey = config.apiKeys.groq || process.env.GROQ_API_KEY;
+      const apiKey = config?.apiKeys?.groq || process.env.GROQ_API_KEY;
       if (!apiKey) {
-        throw new Error('Groq API Key is missing. Please configure it in AI Settings.');
+        throw new Error('Groq API Key is missing. Please ensure GROQ_API_KEY is configured in server environment variables.');
       }
 
       const groq = new OpenAI({
@@ -109,9 +109,9 @@ export async function callLLMWithTrace<T>(
     }
 
     if (provider === 'nvidia') {
-      const apiKey = config.apiKeys.nvidia || process.env.NVIDIA_API_KEY;
+      const apiKey = config?.apiKeys?.nvidia || process.env.NVIDIA_API_KEY;
       if (!apiKey) {
-        throw new Error('NVIDIA API Key is missing. Please configure it in AI Settings.');
+        throw new Error('NVIDIA API Key is missing. Please ensure NVIDIA_API_KEY is configured in server environment variables.');
       }
 
       const nvidia = new OpenAI({
@@ -144,9 +144,9 @@ export async function callLLMWithTrace<T>(
     }
 
     if (provider === 'gemini') {
-      const apiKey = config.apiKeys.gemini || process.env.GEMINI_API_KEY;
+      const apiKey = config?.apiKeys?.gemini || process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        throw new Error('Gemini API Key is missing. Please configure it in AI Settings.');
+        throw new Error('Gemini API Key is missing. Please ensure GEMINI_API_KEY is configured in server environment variables.');
       }
       const genAI = new GoogleGenerativeAI(apiKey);
 
@@ -171,9 +171,9 @@ export async function callLLMWithTrace<T>(
     }
 
     if (provider === 'openai') {
-      const apiKey = config.apiKeys.openai || process.env.OPENAI_API_KEY;
+      const apiKey = config?.apiKeys?.openai || process.env.OPENAI_API_KEY;
       if (!apiKey) {
-        throw new Error('OpenAI API Key is missing. Please configure it in AI Settings.');
+        throw new Error('OpenAI API Key is missing. Please ensure OPENAI_API_KEY is configured in server environment variables.');
       }
       const openai = new OpenAI({ apiKey });
       const response = await openai.chat.completions.create({
@@ -200,9 +200,9 @@ export async function callLLMWithTrace<T>(
     }
 
     if (provider === 'anthropic') {
-      const apiKey = config.apiKeys.anthropic || process.env.ANTHROPIC_API_KEY;
+      const apiKey = config?.apiKeys?.anthropic || process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
-        throw new Error('Anthropic API Key is missing. Please configure it in AI Settings.');
+        throw new Error('Anthropic API Key is missing. Please ensure ANTHROPIC_API_KEY is configured in server environment variables.');
       }
       const anthropic = new Anthropic({ apiKey });
       const response = await anthropic.messages.create({
