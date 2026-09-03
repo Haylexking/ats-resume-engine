@@ -173,8 +173,9 @@ export default function Home() {
         }),
       });
       const data = await res.json();
-      if (data.success && data.docxBase64) {
-        const byteCharacters = atob(data.docxBase64);
+      const base64Str = data.docxBase64 || data.base64;
+      if (data.success && base64Str) {
+        const byteCharacters = atob(base64Str);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -186,13 +187,15 @@ export default function Home() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const candidateName = activeResume.contact_block.name.replace(/\s+/g, '_') || 'Resume';
-        const roleName = currentApp.job_title.replace(/[^a-zA-Z0-9]/g, '_') || 'Tailored';
+        const candidateName = activeResume.contact_block?.name?.replace(/\s+/g, '_') || 'Resume';
+        const roleName = currentApp.job_title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Tailored';
         a.download = `${candidateName}_${roleName}_ATS.docx`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      } else {
+        alert(data.error || 'Failed to generate Word document');
       }
     } catch (err: any) {
       console.error('Download error:', err);
@@ -216,18 +219,21 @@ export default function Home() {
         }),
       });
       const data = await res.json();
-      if (data.success && data.txt) {
-        const blob = new Blob([data.txt], { type: 'text/plain;charset=utf-8' });
+      const txtContent = data.txt || data.text;
+      if (data.success && txtContent) {
+        const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const candidateName = activeResume.contact_block.name.replace(/\s+/g, '_') || 'Resume';
-        const roleName = currentApp.job_title.replace(/[^a-zA-Z0-9]/g, '_') || 'Tailored';
+        const candidateName = activeResume.contact_block?.name?.replace(/\s+/g, '_') || 'Resume';
+        const roleName = currentApp.job_title?.replace(/[^a-zA-Z0-9]/g, '_') || 'Tailored';
         a.download = `${candidateName}_${roleName}_ATS.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      } else {
+        alert(data.error || 'Failed to generate Text document');
       }
     } catch (err: any) {
       console.error('Download error:', err);

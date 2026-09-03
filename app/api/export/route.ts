@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         text: parseabilityResult.raw_extracted_text,
+        txt: parseabilityResult.raw_extracted_text,
         parseability: parseabilityResult,
       });
     }
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
       success: true,
       filename: `Resume_${safeName}_${industry}.docx`,
       base64,
+      docxBase64: base64,
       parseability: parseabilityResult,
     });
   } catch (err: any) {
