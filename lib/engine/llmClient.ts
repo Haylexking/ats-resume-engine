@@ -40,24 +40,12 @@ export async function callLLMWithTrace<T>(
   const startTime = Date.now();
 
   // Role-based model selection
-  let selectedModel = options?.modelOverride || config.model;
-  if (provider === 'nvidia') {
+  let selectedModel = options?.modelOverride;
+  if (!selectedModel) {
     if (role === 'parse') {
-      selectedModel = config.modelParse || process.env.MODEL_PARSE || 'meta/llama-3.2-11b-vision-instruct';
+      selectedModel = config.modelParse || config.model;
     } else {
-      selectedModel = config.modelReason || process.env.MODEL_REASON || 'meta/llama-3.2-90b-vision-instruct';
-    }
-  } else if (provider === 'groq') {
-    if (role === 'parse') {
-      selectedModel = config.modelParse || 'qwen/qwen3.8-27b';
-    } else {
-      selectedModel = config.modelReason || 'groq/compound-mini';
-    }
-  } else if (provider === 'gemini') {
-    if (role === 'parse') {
-      selectedModel = config.modelParse || process.env.MODEL_PARSE || 'gemini-3.6-flash';
-    } else {
-      selectedModel = config.modelReason || process.env.MODEL_REASON || 'gemini-3.6-flash';
+      selectedModel = config.modelReason || config.model;
     }
   }
 
@@ -82,6 +70,7 @@ export async function callLLMWithTrace<T>(
       const groq = new OpenAI({
         apiKey,
         baseURL: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
+        timeout: 20000,
       });
 
       const response = await groq.chat.completions.create({
@@ -102,7 +91,7 @@ export async function callLLMWithTrace<T>(
       return {
         data: parsed,
         thinking,
-        model: selectedModel,
+        model: selectedModel || 'groq/compound-mini',
         provider,
         durationMs: Date.now() - startTime,
       };
@@ -117,10 +106,11 @@ export async function callLLMWithTrace<T>(
       const nvidia = new OpenAI({
         apiKey,
         baseURL: process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1',
+        timeout: 25000,
       });
 
       const response = await nvidia.chat.completions.create({
-        model: selectedModel || (role === 'parse' ? 'meta/llama-3.2-11b-vision-instruct' : 'meta/llama-3.2-90b-vision-instruct'),
+        model: selectedModel || (role === 'parse' ? 'meta/llama-3.1-8b-instruct' : 'meta/llama-3.3-70b-instruct'),
         messages: [
           { role: 'system', content: `${systemPrompt}\n\nIMPORTANT: Respond with pure, valid JSON only. Do not wrap in markdown or commentary.` },
           { role: 'user', content: prompt },
