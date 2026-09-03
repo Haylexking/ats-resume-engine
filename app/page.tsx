@@ -89,7 +89,16 @@ export default function Home() {
           aiSettings,
         }),
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        if (!res.ok) {
+          throw new Error(`Server Gateway Timeout (${res.status}): The selected AI model took longer than Vercel's serverless window. Try switching to Groq LPU (Compound Mini) in AI Settings for instant ~2-second execution.`);
+        }
+        throw new Error('Invalid response received from the analysis engine.');
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to complete ATS analysis');
       }
