@@ -143,15 +143,24 @@ export function getAISettings(): AISettingConfig {
   ensureDirExists();
   const defaultNvidiaKey = process.env.NVIDIA_API_KEY || '';
   const defaultGroqKey = process.env.GROQ_API_KEY || '';
-  const defaultGeminiKey = process.env.GEMINI_API_KEY || '';
+  const defaultGeminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
   const defaultOpenAIKey = process.env.OPENAI_API_KEY || '';
   const defaultAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
 
+  const providerEnv = (process.env.DEFAULT_AI_PROVIDER || process.env.AI_PROVIDER || process.env.PROVIDER || 'groq') as any;
+  const modelEnv = process.env.DEFAULT_AI_MODEL || process.env.MODEL_PRIMARY || process.env.MODEL || process.env.AI_MODEL || 'groq/compound-mini';
+  const parseEnv = process.env.MODEL_PARSE || process.env.PARSE_MODEL || (providerEnv === 'groq' ? 'qwen/qwen3.8-27b' : providerEnv === 'gemini' ? 'gemini-3.6-flash' : 'meta/llama-3.2-11b-vision-instruct');
+  const reasonEnv = process.env.MODEL_REASON || process.env.REASON_MODEL || modelEnv;
+  const secProviderEnv = (process.env.SECONDARY_AI_PROVIDER || process.env.SECONDARY_PROVIDER) as any;
+  const secModelEnv = process.env.SECONDARY_AI_MODEL || process.env.SECONDARY_MODEL;
+
   const defaults: AISettingConfig = {
-    provider: (process.env.DEFAULT_AI_PROVIDER as any) || 'groq',
-    model: process.env.MODEL_PRIMARY || process.env.DEFAULT_AI_MODEL || 'groq/compound-mini',
-    modelParse: process.env.MODEL_PARSE || 'qwen/qwen3.8-27b',
-    modelReason: process.env.MODEL_REASON || 'groq/compound-mini',
+    provider: providerEnv,
+    model: modelEnv,
+    modelParse: parseEnv,
+    modelReason: reasonEnv,
+    secondaryProvider: secProviderEnv || undefined,
+    secondaryModel: secModelEnv || undefined,
     apiKeys: {
       nvidia: defaultNvidiaKey,
       groq: defaultGroqKey,
@@ -174,8 +183,8 @@ export function getAISettings(): AISettingConfig {
       model: saved.model || defaults.model,
       modelParse: saved.modelParse || defaults.modelParse,
       modelReason: saved.modelReason || defaults.modelReason,
-      secondaryProvider: saved.secondaryProvider,
-      secondaryModel: saved.secondaryModel,
+      secondaryProvider: saved.secondaryProvider || defaults.secondaryProvider,
+      secondaryModel: saved.secondaryModel || defaults.secondaryModel,
       apiKeys: {
         nvidia: saved.apiKeys?.nvidia || defaultNvidiaKey,
         groq: saved.apiKeys?.groq || defaultGroqKey,
