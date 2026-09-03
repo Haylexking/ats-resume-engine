@@ -43,12 +43,12 @@ export async function POST(req: Request) {
       apiKeys: aiSettings?.apiKeys || {},
     };
 
-    // Step 1: Parse candidate resume into structured schema
-    const targetResume: MasterResume = await parseResumeText(cleanResume, safeAiSettings);
-
-    // Step 2: Parse JD into structured JSON (Role, Competencies, and Sector Context)
+    // Step 1 & 2: Concurrently parse Candidate Resume and Job Description
     const t0 = Date.now();
-    const parsedJD = await parseJobDescription(cleanJd, safeAiSettings, CURRENT_PROMPT_VERSIONS.parse);
+    const [targetResume, parsedJD] = await Promise.all([
+      parseResumeText(cleanResume, safeAiSettings),
+      parseJobDescription(cleanJd, safeAiSettings, CURRENT_PROMPT_VERSIONS.parse),
+    ]);
     const t1 = Date.now();
 
     const targetIndustry = (parsedJD.company_context || 'General') as TargetIndustry;

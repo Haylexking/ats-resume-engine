@@ -636,41 +636,33 @@ export async function scoreResumeAgainstJD(
   // PASS B: SEMANTIC / RELEVANCE SCORE (35% weight)
   // FIX #4: Use LLM-backed semantic scoring with TF-IDF cosine fallback
   // ═════════════════════════════════════════════════════════════════════════════
-  let responsibilityCoverage: Array<{
-    responsibility: string;
-    is_covered: boolean;
-    evidenced_by_bullet?: string;
-    confidence?: number;
-  }>;
-
-  try {
-    responsibilityCoverage = await llmSemanticScore(
-      jd.responsibilities,
-      allResumeBullets,
-      config,
-      promptVersion
-    );
-  } catch {
-    // Final fallback: cosine similarity
-    responsibilityCoverage = jd.responsibilities.map((resp) => {
-      let bestBullet: string | undefined;
-      let bestScore = 0;
-      for (const bullet of allResumeBullets) {
-        const score = cosineSimilarity(resp, bullet);
-        if (score > bestScore) {
-          bestScore = score;
-          bestBullet = bullet;
-        }
+  // Hybrid Semantic Cosine & Token Overlap Analysis
+  const responsibilityCoverage = jd.responsibilities.map((resp) => {
+    let bestBullet: string | undefined;
+    let bestScore = 0;
+    const respTokens = resp.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter((t) => t.length > 2);
+    
+    for (const bullet of allResumeBullets) {
+      const cosine = cosineSimilarity(resp, bullet);
+      const bulletLower = bullet.toLowerCase();
+      const matchedCount = respTokens.filter((t) => bulletLower.includes(t)).length;
+      const tokenOverlap = respTokens.length > 0 ? matchedCount / respTokens.length : 0;
+      const combined = Math.max(cosine, tokenOverlap * 0.75);
+      
+      if (combined > bestScore) {
+        bestScore = combined;
+        bestBullet = bullet;
       }
-      const isCovered = bestScore >= 0.12;
-      return {
-        responsibility: resp,
-        is_covered: isCovered,
-        evidenced_by_bullet: isCovered ? bestBullet : undefined,
-        confidence: Math.round(bestScore * 100),
-      };
-    });
-  }
+    }
+    
+    const isCovered = bestScore >= 0.18;
+    return {
+      responsibility: resp,
+      is_covered: isCovered,
+      evidenced_by_bullet: isCovered ? bestBullet : undefined,
+      confidence: Math.round(bestScore * 100),
+    };
+  });
 
   const coveredRespCount = responsibilityCoverage.filter((r) => r.is_covered).length;
   const semanticScore = responsibilityCoverage.length > 0
