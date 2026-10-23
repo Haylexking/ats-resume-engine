@@ -10,6 +10,7 @@ import { RecruiterInsightsCard } from '@/components/RecruiterInsightsCard';
 import { ModelReasoningTrace } from '@/components/ModelReasoningTrace';
 import { ParseabilityHarnessModal } from '@/components/ParseabilityHarnessModal';
 import { HistoryTrackerView } from '@/components/HistoryTrackerView';
+import { TailoredResumeStudio } from '@/components/TailoredResumeStudio';
 import {
   AISettingConfig,
   MasterResume,
@@ -17,11 +18,13 @@ import {
   TieredSuggestion,
   ParseabilityResult,
   ScreeningOutcome,
+  TailoredResume,
+  ResumeTemplateId,
 } from '@/lib/engine/types';
-import { Download, FileCheck, Sparkles, RefreshCw, Cpu, Key, ArrowRight } from 'lucide-react';
+import { Download, FileCheck, Sparkles, RefreshCw, Cpu, Key, ArrowRight, Wand2 } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'history' | 'settings'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'tailored' | 'history' | 'settings'>('studio');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isParseabilityOpen, setIsParseabilityOpen] = useState(false);
 
@@ -43,6 +46,13 @@ export default function Home() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [parseabilityResult, setParseabilityResult] = useState<ParseabilityResult | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  // Tailored Resume Studio States
+  const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null);
+  const [tailoredDocxBase64, setTailoredDocxBase64] = useState<string | undefined>(undefined);
+  const [isTailoring, setIsTailoring] = useState(false);
+  const [lastJdText, setLastJdText] = useState<string>('');
+  const [lastResumeText, setLastResumeText] = useState<string>('');
 
   // Load initial settings and history on mount
   useEffect(() => {
@@ -107,12 +117,93 @@ export default function Home() {
         setActiveResume(data.lensedResume);
         setSuggestions(data.appRecord.suggestions || []);
         setApplications((prev) => [data.appRecord, ...prev]);
+        setLastJdText(payload.jdText);
+        setLastResumeText(payload.resumeText);
       }
     } catch (err: any) {
       console.error('Error running ATS analysis:', err);
       setAnalysisError(err?.message || 'Error occurred during ATS analysis. Please retry or switch AI models.');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  // Generate Tailored Resume with Frontier Pipeline
+  const handleGenerateTailoredResume = async (
+    templateId: ResumeTemplateId = 'classic-harvard'
+  ) => {
+    const jdToUse = lastJdText || currentApp?.jd_text || '';
+    const resumeToUse =
+      lastResumeText ||
+      (activeResume
+        ? `${activeResume.contact_block.name}\n${activeResume.summary}\n${activeResume.experience
+            .map((e) => `${e.title} at ${e.company}\n${e.bullets.map((b) => b.text).join('\n')}`)
+            .join('\n')}`
+        : '');
+
+    if (!jdToUse || !resumeToUse) {
+      alert('Please provide a Job Description and Candidate Resume to generate a tailored CV.');
+      return;
+    }
+
+    setIsTailoring(true);
+    setAnalysisError(null);
+    try {
+      const res = await fetch('/api/tailor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jdText: jdToUse,
+          resumeText: resumeToUse,
+          aiSettings,
+          templateId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate tailored CV.');
+      }
+
+      setTailoredResume(data.tailoredResume);
+      setTailoredDocxBase64(data.docxBase64);
+      setActiveTab('tailored');
+      return data.docxBase64;
+    } catch (err: any) {
+      console.error('Error generating tailored resume:', err);
+      alert('Tailoring Error: ' + (err?.message || 'Failed to generate tailored resume'));
+    } finally {
+      setIsTailoring(false);
+    }
+  };
+
+  // Handle template preset change from Studio
+  const handleTemplateChange = async (
+    newTemplate: ResumeTemplateId
+  ): Promise<string | void> => {
+    if (!tailoredResume) return;
+    const jdToUse = lastJdText || `${tailoredResume.target_role} at ${tailoredResume.target_company}`;
+    const resumeToUse = lastResumeText || JSON.stringify(tailoredResume);
+
+    try {
+      const res = await fetch('/api/tailor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jdText: jdToUse,
+          resumeText: resumeToUse,
+          aiSettings,
+          templateId: newTemplate,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.docxBase64) {
+        setTailoredDocxBase64(data.docxBase64);
+        setTailoredResume((prev) => (prev ? { ...prev, template_id: newTemplate } : null));
+        return data.docxBase64;
+      }
+    } catch (err) {
+      console.error('Error switching template:', err);
     }
   };
 
@@ -274,6 +365,7 @@ export default function Home() {
         setActiveTab={(tab: any) => setActiveTab(tab)}
         aiSettings={aiSettings}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        hasTailoredResume={!!tailoredResume}
       />
 
       {/* Main Container */}
@@ -356,6 +448,47 @@ export default function Home() {
                 {/* 3 Pass Score Gauges & Breakdown */}
                 <ScoreGauges scores={currentApp.scores} parsedJD={currentApp.parsed_jd} />
 
+                {/* ⚡ Tailored CV Studio Quick Launch Banner */}
+                <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-[#111114] to-[#111114] p-4 sm:p-5 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                      <h4 className="text-sm font-bold text-zinc-100">
+                        Tailored CV Studio &amp; Word Exporter
+                      </h4>
+                      <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono text-emerald-300 border border-emerald-500/30">
+                        Google XYZ Engine
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 max-w-xl">
+                      Synthesize complete target-aligned experience bullets, 100% metric preservation, Harvard/Modern/Tech Word presets, and adversarial audit.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (tailoredResume) {
+                        setActiveTab('tailored');
+                      } else {
+                        handleGenerateTailoredResume();
+                      }
+                    }}
+                    disabled={isTailoring}
+                    className="flex items-center justify-center space-x-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-bold px-5 py-2.5 text-xs transition shadow-lg shadow-emerald-500/20 active:scale-95 shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="h-4 w-4 text-zinc-950" />
+                    <span>
+                      {isTailoring
+                        ? 'Synthesizing XYZ Bullets...'
+                        : tailoredResume
+                        ? 'Open Tailored Studio →'
+                        : 'Synthesize & Tailor CV'}
+                    </span>
+                  </button>
+                </div>
+
                 {/* Interactive 3-Tier Suggestion Diff */}
                 <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-4 sm:p-6 shadow-2xl space-y-5 sm:space-y-6">
                   <TieredSuggestionsDiff
@@ -417,6 +550,57 @@ export default function Home() {
                 <p className="text-xs text-zinc-500 max-w-sm mx-auto leading-relaxed">
                   Paste any target Job Description and upload or paste candidate resume text above, then click &quot;Run ATS Match &amp; Gap Engine&quot; to inspect 3-pass scoring and recruiter rewrites.
                 </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'tailored' && (
+          <div className="space-y-5 sm:space-y-6">
+            {tailoredResume ? (
+              <TailoredResumeStudio
+                tailoredResume={tailoredResume}
+                initialDocxBase64={tailoredDocxBase64}
+                onTemplateChange={handleTemplateChange}
+              />
+            ) : (
+              <div className="rounded-2xl border border-dashed border-zinc-800 bg-[#111114]/50 p-8 sm:p-14 text-center space-y-4">
+                <div className="h-12 w-12 rounded-2xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center mx-auto text-emerald-400">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <div className="space-y-1.5 max-w-md mx-auto">
+                  <h3 className="text-base font-bold text-zinc-100">
+                    No Tailored Resume Generated Yet
+                  </h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    {currentApp
+                      ? `We detected your analysis for "${currentApp.job_title}". Click below to generate full Google XYZ rewritten experience bullets and professional Word documents.`
+                      : 'Run an ATS match on the "ATS Analysis" tab first, or paste your target job and resume to synthesize high-impact Google XYZ bullets.'}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentApp) {
+                        handleGenerateTailoredResume();
+                      } else {
+                        setActiveTab('studio');
+                      }
+                    }}
+                    disabled={isTailoring}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-bold px-6 py-2.5 text-xs transition shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>
+                      {isTailoring
+                        ? 'Synthesizing XYZ Bullets...'
+                        : currentApp
+                        ? 'Tailor Resume for ' + currentApp.job_title
+                        : 'Go to ATS Studio & Paste Resume'}
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

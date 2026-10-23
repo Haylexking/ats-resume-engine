@@ -153,6 +153,63 @@ export type ScreeningOutcome =
   | 'rejection'
   | 'offer';
 
+export type ResumeTemplateId = 'classic-harvard' | 'modern-executive' | 'tech-linear';
+
+export interface TailoredBullet {
+  original_text: string;
+  tailored_text: string;
+  keywords_injected: string[];
+  metrics_preserved: boolean;
+  explanation?: string;
+}
+
+export interface TailoredExperience {
+  id: string;
+  company: string;
+  title: string;
+  original_title?: string;
+  dates: string;
+  location?: string;
+  bullets: TailoredBullet[];
+}
+
+export interface FactCheckViolation {
+  bullet_id?: string;
+  severity: 'low' | 'medium' | 'high';
+  reason: string;
+  original_claim?: string;
+  tailored_claim?: string;
+}
+
+export interface FactCheckResult {
+  verified: boolean;
+  confidence_score: number;
+  violations: FactCheckViolation[];
+  audit_summary: string;
+}
+
+export interface GapClassification {
+  evidenced_direct: string[];
+  evidenced_semantic: string[];
+  plausible_context: string[];
+  genuine_gaps: string[];
+}
+
+export interface TailoredResume {
+  contact_block: MasterResume['contact_block'];
+  summary: string;
+  skills_section: MasterResume['skills_section'];
+  experience: TailoredExperience[];
+  education: MasterResume['education'];
+  certifications: string[];
+  target_role: string;
+  target_company: string;
+  ats_keyword_coverage: number;
+  fact_check: FactCheckResult;
+  gap_analysis: GapClassification;
+  template_id?: ResumeTemplateId;
+}
+
 export interface JobApplicationRecord {
   id: string;
   created_at: string;
@@ -168,6 +225,7 @@ export interface JobApplicationRecord {
   screening_outcome?: ScreeningOutcome;
   applied_at?: string;
   parseability_diff?: string[];
+  tailored_resume?: TailoredResume;
   prompt_versions?: {
     parse: string;
     score: string;
