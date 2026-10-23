@@ -225,15 +225,28 @@ export async function synthesizeGoogleXYZBullets(
     return generateHeuristicXYZSynthesis(masterResume, parsedJD, gapAnalysis);
   }
 
-  const systemPrompt = `You are an elite Executive Resume Architect and Google XYZ Bullet Writer.
+  const systemPrompt = `You are an elite Executive Resume Architect, Senior Hiring Manager, and Google XYZ Bullet Writer.
 Your task is to transform the candidate's resume for the target role: "${parsedJD.title}" at "${parsedJD.company}".
 
-CRITICAL INSTRUCTIONS & METRIC INTEGRITY:
-1. GOOGLE XYZ FORMULA: Structure every tailored bullet as: "Accomplished [X], measured by [Y], by doing [Z]" or active impact-first action verbs.
-2. ZERO METRIC ALTERATION (STRICT): Preserve 100% of the candidate's verified numbers, percentages, dollar values, scale factors, and timeframes. NEVER fabricate, inflate, or delete an existing metric.
-3. KEYWORD INJECTION: Naturally weave in relevant keywords from evidenced_direct, evidenced_semantic, and plausible_context into active accomplishment statements.
-4. EXECUTIVE SUMMARY: Craft a compelling 3-4 sentence summary tailored directly to ${parsedJD.title} at ${parsedJD.company}.
-5. SKILLS CURATION: Organize the skills section prioritizing target role technologies.
+CRITICAL RECRUITER STANDARDS & METRIC INTEGRITY:
+1. GOOGLE XYZ FORMULA & ACHIEVER TONE:
+   - Structure every tailored bullet as: "Accomplished [X], measured by [Y], by doing [Z]" or active impact-first action verbs.
+   - BANNED PASSIVE PHRASES: NEVER use weak "doer" phrases like "Partnered with...", "Responsible for...", "Assisted with...", "Helped to...", "Tasked with...", or "Worked on...".
+   - ALWAYS use executive achiever verbs: "Spearheaded", "Architected", "Engineered", "Transformed", "Pioneered", "Orchestrated", "Accelerated", "Delivered".
+2. ZERO METRIC ALTERATION (STRICT 100% GROUND TRUTH):
+   - Preserve 100% of the candidate's verified numbers, percentages (e.g. 35%), dollar values, scale factors (e.g. 2M users), and timeframes.
+   - NEVER fabricate, inflate, or delete an existing metric.
+3. EXECUTIVE SUMMARY BREVITY (RECRUITER 6-SECOND RULE):
+   - STRICT LENGTH: Exactly 50 to 90 words (3-4 concise, punchy sentences).
+   - Highlighting Target Title, Years of Relevant Experience, Top 2 Core Competencies matching the JD, and 1 Hero Metric. Never exceed 100 words.
+4. CURATED SKILLS BUDGET (8 TO 14 SKILLS ONLY):
+   - Do NOT dump 30+ skills. Curate between 8 and 14 high-signal skills prioritized directly for ${parsedJD.title}.
+   - Group logically into Languages, Frameworks, Tools/Cloud, and Practices.
+5. REVERSE CHRONOLOGICAL ORDER & DATES:
+   - Experiences must be in descending reverse-chronological order (most recent first).
+   - Standardize dates with Month and Year (e.g. "Jan 2022 – Present" or "03/2021 – 11/2023"). Never omit the month.
+6. PAGE BUDGET & PRIORITIZATION:
+   - Allocate 3-5 high-impact bullets for senior/recent roles, and 2-3 for older roles so the document stays within a crisp 1-to-2 page length.
 
 Output strictly valid JSON with this schema:
 {

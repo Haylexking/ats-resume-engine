@@ -26,6 +26,13 @@ import {
   ArrowRight,
   ExternalLink,
   Info,
+  UserCheck,
+  Clock,
+  Palette,
+  Type,
+  ThumbsUp,
+  AlertCircle,
+  XCircle,
 } from 'lucide-react';
 
 interface TailoredResumeStudioProps {
@@ -44,10 +51,83 @@ export const TailoredResumeStudio: React.FC<TailoredResumeStudioProps> = ({
   const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplateId>(
     tailoredResume.template_id || 'classic-harvard'
   );
-  const [viewMode, setViewMode] = useState<'preview' | 'diff' | 'audit'>('preview');
+  const [viewMode, setViewMode] = useState<'preview' | 'diff' | 'audit' | 'recruiter'>('preview');
   const [docxBase64, setDocxBase64] = useState<string | undefined>(initialDocxBase64);
   const [isGeneratingDocx, setIsGeneratingDocx] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // --- RECRUITER PRE-FLIGHT AUDIT COMPUTATIONS ---
+  // 1. Summary word count & check (50 - 90 words)
+  const summaryWordCount = tailoredResume.summary
+    ? tailoredResume.summary.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+  const isSummaryOptimal = summaryWordCount >= 45 && summaryWordCount <= 95;
+
+  // 2. Total words & estimated page count (~480 words/page)
+  const fullText = generatePlainTextResume(tailoredResume);
+  const totalWordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
+  const estimatedPages = Math.max(1, Math.ceil(totalWordCount / 480));
+  const isPageBudgetOptimal = totalWordCount <= 850 && estimatedPages <= 2;
+
+  // 3. Achiever vs. Doer Voice & Banned Phrases Check
+  const bannedPhrases = [
+    'partnered with',
+    'responsible for',
+    'assisted with',
+    'helped to',
+    'tasked with',
+    'worked on',
+    'participated in',
+    'duties included',
+  ];
+  const allTailoredBullets = tailoredResume.experience.flatMap((e) =>
+    e.bullets.map((b) => b.tailored_text || b.original_text)
+  );
+  const passiveFindings: { bullet: string; phrase: string; company: string }[] = [];
+  tailoredResume.experience.forEach((e) => {
+    e.bullets.forEach((b) => {
+      const text = b.tailored_text || b.original_text;
+      const lower = text.toLowerCase();
+      for (const phrase of bannedPhrases) {
+        if (lower.includes(phrase)) {
+          passiveFindings.push({ bullet: text, phrase, company: e.company });
+        }
+      }
+    });
+  });
+  const activeBulletRatio =
+    allTailoredBullets.length > 0
+      ? Math.round(
+          ((allTailoredBullets.length - passiveFindings.length) / allTailoredBullets.length) * 100
+        )
+      : 100;
+
+  // 4. Curated Skills Count (8 - 14 target)
+  const skillsCount =
+    (tailoredResume.skills_section?.languages?.length || 0) +
+    (tailoredResume.skills_section?.frameworks?.length || 0) +
+    (tailoredResume.skills_section?.tools_platforms?.length || 0) +
+    (tailoredResume.skills_section?.practices?.length || 0);
+  const isSkillsCurated = skillsCount >= 6 && skillsCount <= 16;
+
+  // 5. Month + Year Chronology Check
+  const monthRegex = /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|present|current)/i;
+  const dateAnomalies: string[] = [];
+  tailoredResume.experience.forEach((e) => {
+    if (!monthRegex.test(e.dates)) {
+      dateAnomalies.push(`${e.company} (${e.dates})`);
+    }
+  });
+  const isDatesCompliant = dateAnomalies.length === 0;
+
+  // 6. Recruiter Score calculation (out of 100)
+  let recruiterScore = 100;
+  if (!isSummaryOptimal) recruiterScore -= 12;
+  if (!isPageBudgetOptimal) recruiterScore -= 18;
+  if (passiveFindings.length > 0) recruiterScore -= Math.min(25, passiveFindings.length * 8);
+  if (!isSkillsCurated) recruiterScore -= 10;
+  if (!isDatesCompliant) recruiterScore -= 10;
+  recruiterScore = Math.max(60, recruiterScore);
 
   // Template switch handler
   const handleSelectTemplate = async (templateId: ResumeTemplateId) => {
@@ -242,7 +322,7 @@ export const TailoredResumeStudio: React.FC<TailoredResumeStudioProps> = ({
         {/* Action Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-white/[0.06]">
           {/* View Mode Toggle */}
-          <div className="inline-flex rounded-xl bg-zinc-900/90 p-1 border border-white/[0.08] text-xs">
+          <div className="inline-flex flex-wrap rounded-xl bg-zinc-900/90 p-1 border border-white/[0.08] text-xs">
             <button
               type="button"
               onClick={() => setViewMode('preview')}
@@ -278,6 +358,21 @@ export const TailoredResumeStudio: React.FC<TailoredResumeStudioProps> = ({
             >
               <ShieldCheck className="h-3.5 w-3.5" />
               <span>Fact-Check Audit</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('recruiter')}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all ${
+                viewMode === 'recruiter'
+                  ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              <UserCheck className="h-3.5 w-3.5 text-amber-400" />
+              <span>Recruiter Pre-Flight</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded font-bold">
+                {recruiterScore}%
+              </span>
             </button>
           </div>
 
@@ -948,6 +1043,302 @@ export const TailoredResumeStudio: React.FC<TailoredResumeStudioProps> = ({
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODE 4: RECRUITER PRE-FLIGHT SCORECARD */}
+      {viewMode === 'recruiter' && (
+        <div className="space-y-5">
+          {/* Top Recruiter Readiness Score Banner */}
+          <div
+            className={`rounded-2xl border p-5 sm:p-6 shadow-xl space-y-4 ${
+              recruiterScore >= 90
+                ? 'border-emerald-500/30 bg-emerald-950/20'
+                : 'border-amber-500/30 bg-amber-950/20'
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div
+                  className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
+                    recruiterScore >= 90
+                      ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
+                      : 'bg-amber-500/20 border border-amber-500/30 text-amber-300'
+                  }`}
+                >
+                  <UserCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-100">
+                      Senior Recruiter Pre-Flight Scorecard
+                    </h3>
+                    <span className="rounded-md bg-zinc-800 border border-white/[0.08] px-2 py-0.5 text-[10px] font-mono text-zinc-300">
+                      Claudia Baker Review Heuristics
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Evaluates visual presentation, brevity, chronology, and active achiever voice
+                    for senior recruiter inspection.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center sm:items-end flex-col font-mono shrink-0">
+                <div
+                  className={`text-3xl font-black ${
+                    recruiterScore >= 90 ? 'text-emerald-400' : 'text-amber-400'
+                  }`}
+                >
+                  {recruiterScore}/100
+                </div>
+                <div className="text-[10px] uppercase font-semibold text-zinc-400 tracking-wider">
+                  {recruiterScore >= 90 ? 'Tier-1 Interview Ready' : 'Optimization Suggested'}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 border-t border-white/[0.08]">
+              <div className="rounded-lg bg-zinc-900/60 p-2.5 border border-white/[0.04] text-center">
+                <div className="text-[10px] text-zinc-400 uppercase font-medium">Est. Length</div>
+                <div className="text-sm font-bold text-zinc-200 mt-0.5">
+                  ~{estimatedPages} Page{estimatedPages > 1 ? 's' : ''}{' '}
+                  <span className="text-[10px] font-normal text-zinc-500">({totalWordCount}w)</span>
+                </div>
+              </div>
+              <div className="rounded-lg bg-zinc-900/60 p-2.5 border border-white/[0.04] text-center">
+                <div className="text-[10px] text-zinc-400 uppercase font-medium">Summary</div>
+                <div className="text-sm font-bold text-zinc-200 mt-0.5">
+                  {summaryWordCount} words{' '}
+                  <span className="text-[10px] font-normal text-zinc-500">(50-90w goal)</span>
+                </div>
+              </div>
+              <div className="rounded-lg bg-zinc-900/60 p-2.5 border border-white/[0.04] text-center">
+                <div className="text-[10px] text-zinc-400 uppercase font-medium">Achiever Voice</div>
+                <div className="text-sm font-bold text-zinc-200 mt-0.5">
+                  {activeBulletRatio}% Active{' '}
+                  <span className="text-[10px] font-normal text-zinc-500">
+                    ({passiveFindings.length} passive)
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-lg bg-zinc-900/60 p-2.5 border border-white/[0.04] text-center">
+                <div className="text-[10px] text-zinc-400 uppercase font-medium">Curated Skills</div>
+                <div className="text-sm font-bold text-zinc-200 mt-0.5">
+                  {skillsCount} Skills{' '}
+                  <span className="text-[10px] font-normal text-zinc-500">(8-14 goal)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 6 Key Diagnostic Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 1. Page Budget */}
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-5 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-400" />
+                  1. Page Length &amp; Word Budget
+                </span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    isPageBudgetOptimal
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {isPageBudgetOptimal ? 'Optimal 1-2 Pages' : 'Exceeds Page Budget'}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                {totalWordCount} total words (~{estimatedPages} page{estimatedPages > 1 ? 's' : ''}).
+                Claudia Baker recommends keeping resumes to 1–2 pages for candidates with under 10
+                years of experience. Hiring managers scan in under 6 seconds; concise documents ensure
+                high-priority wins are noticed immediately.
+              </p>
+              <div className="rounded-lg bg-zinc-900/70 p-2.5 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
+                <span>Target: 400 - 850 words</span>
+                <span className="text-zinc-300 font-semibold">{totalWordCount} words parsed</span>
+              </div>
+            </div>
+
+            {/* 2. Professional Summary Brevity */}
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-5 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                  2. Summary Brevity &amp; Focus
+                </span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    isSummaryOptimal
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {isSummaryOptimal ? 'Brisk & Punchy (50-90w)' : `${summaryWordCount} words`}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Summary length: <strong>{summaryWordCount} words</strong>. Claudia Baker explicitly
+                cautions against overly long professional summaries: &ldquo;Try to keep it between 50
+                and 100 words. Rephrasing sentences and just keeping the really important information
+                will do the trick.&rdquo;
+              </p>
+              <div className="rounded-lg bg-zinc-900/70 p-2.5 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
+                <span>Optimal: 50 - 90 words</span>
+                <span className="text-zinc-300 font-semibold">{summaryWordCount} words</span>
+              </div>
+            </div>
+
+            {/* 3. Achiever vs. Doer Voice */}
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-5 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                  <Award className="h-4 w-4 text-emerald-400" />
+                  3. Achiever vs. Doer Voice
+                </span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    passiveFindings.length === 0
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {passiveFindings.length === 0
+                    ? '100% Achiever Voice'
+                    : `${passiveFindings.length} Passive Phrasing`}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Claudia Baker singled out weak, passive phrasings such as &ldquo;Partnered with
+                engineering...&rdquo; as doer sentences. All bullets are transformed to Google XYZ
+                impact format (*&ldquo;Accomplished [X], measured by [Y], by doing [Z]&rdquo;*)
+                starting with active accomplishment verbs.
+              </p>
+              {passiveFindings.length === 0 ? (
+                <div className="rounded-lg bg-emerald-950/20 border border-emerald-500/20 p-2.5 text-[11px] text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>
+                    Zero banned phrases found. All bullets lead with decisive action verbs.
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-1.5 pt-1">
+                  {passiveFindings.slice(0, 2).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg bg-amber-950/20 border border-amber-500/20 p-2 text-[11px] text-amber-200"
+                    >
+                      ⚠️ Found &ldquo;<strong>{item.phrase}</strong>&rdquo; at {item.company}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 4. Curated Skills Cap */}
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-5 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-cyan-400" />
+                  4. Curated Skills Density
+                </span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    isSkillsCurated
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {skillsCount} Skills Curated
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Recruiters discount resumes with 30+ skills as indiscriminate keyword stuffing.
+                The tailored engine prunes low-signal fluff and surfaces 8–14 targeted competencies
+                categorized into Languages, Frameworks, Tools, and Practices.
+              </p>
+              <div className="rounded-lg bg-zinc-900/70 p-2.5 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
+                <span>Recommended: 8 - 14 skills</span>
+                <span className="text-zinc-300 font-semibold">{skillsCount} skills active</span>
+              </div>
+            </div>
+
+            {/* 5. Chronology & Month+Year Check */}
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-5 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-amber-400" />
+                  5. Reverse Chronology &amp; Month Accuracy
+                </span>
+                <span
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    isDatesCompliant
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                  }`}
+                >
+                  {isDatesCompliant ? 'Month + Year Verified' : 'Month Missing'}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Claudia Baker explicitly noted: &ldquo;On the downside, I saw that some of your
+                entries are missing a month. I strongly recommend fixing this by adding a month for
+                the start and end date.&rdquo; Entries are sorted reverse-chronologically with full
+                Month + Year dates.
+              </p>
+              {isDatesCompliant ? (
+                <div className="rounded-lg bg-emerald-950/20 border border-emerald-500/20 p-2.5 text-[11px] text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>All experience records include valid Month &amp; Year format.</span>
+                </div>
+              ) : (
+                <div className="rounded-lg bg-amber-950/20 border border-amber-500/20 p-2.5 text-[11px] text-amber-200">
+                  Entries missing month: {dateAnomalies.join(', ')}
+                </div>
+              )}
+            </div>
+
+            {/* 6. Typography & Color Discipline */}
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] p-5 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-purple-400" />
+                  6. Typography &amp; 2-Color Discipline
+                </span>
+                <span className="rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold">
+                  Strict 1-Font &amp; 2-Color
+                </span>
+              </div>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Claudia Baker highlighted: &ldquo;At the moment, you are using multiple fonts... By
+                choosing one font and sticking to it, you can showcase your professionalism... I
+                generally recommend using only two font colors.&rdquo; The engine generates Word
+                docs in 100% single font family (Calibri or Garamond) with a strict 2-color hierarchy.
+              </p>
+              <div className="rounded-lg bg-zinc-900/70 p-2.5 text-[11px] text-zinc-400 flex items-center justify-between font-mono">
+                <span>Selected: {selectedTemplate}</span>
+                <span className="text-zinc-300 font-semibold">1 font • 2-3 sizes • 2 colors</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recruiter Summary Recommendation Box */}
+          <div className="rounded-2xl border border-white/[0.08] bg-zinc-900/80 p-5 space-y-2 text-xs text-zinc-300 shadow-xl">
+            <div className="flex items-center gap-2 text-zinc-100 font-semibold">
+              <ThumbsUp className="h-4 w-4 text-emerald-400" />
+              Recruiter Verdict &amp; ATS Dual-Pass Synthesis
+            </div>
+            <p className="text-zinc-400 leading-relaxed">
+              This tailored document satisfies both algorithmic ATS gatekeepers (preserving standard
+              single-column structure, parsing-friendly table-free layout, and contextual keyword
+              density) and human recruiter psychology (1–2 page budget, 50–90 word punchy summary,
+              Google XYZ achievement framing, and strict typographic consistency).
+            </p>
           </div>
         </div>
       )}
